@@ -13,7 +13,6 @@
     <EnableProjectPriFile>false</EnableProjectPriFile>
     <AppxPackage>false</AppxPackage>
     <DisableWinUI8xMsixTooling>true</DisableWinUI8xMsixTooling>
-    <AppxMSBuildTaskAssembly>$(MSBuildThisFileDirectory)..\..\DummyAppxPackage\bin\Debug\netstandard2.0\Microsoft.Build.AppxPackage.dll</AppxMSBuildTaskAssembly>
   </PropertyGroup>
 
   <ItemGroup>

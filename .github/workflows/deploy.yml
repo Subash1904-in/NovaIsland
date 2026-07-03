@@ -16,7 +16,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '9.0.x'
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
@@ -26,7 +26,7 @@ jobs:
 
     - name: Build and Package
       # This command compiles the release version and triggers the packaging tools
-      run: msbuild -p:Configuration=Release -p:AppxBundle=Always
+      run: msbuild NovaIsland.sln -restore -p:Configuration=Release
 
     - name: Upload Compiled App
       uses: actions/upload-artifact@v4
