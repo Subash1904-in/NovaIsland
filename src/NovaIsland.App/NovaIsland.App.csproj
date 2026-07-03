@@ -6,10 +6,13 @@
     <RootNamespace>NovaIsland.App</RootNamespace>
     <AssemblyName>NovaIsland.App</AssemblyName>
     <Description>Nova Island host — DI composition root, Generic Host entry point, Native AOT entry.</Description>
-    <!-- Opt into trimming analysis for AOT readiness even in debug builds -->
-    <PublishAot>true</PublishAot>
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Temporarily disabled AOT and trimming to fix EF Core/Serilog incompatibilities in CI -->
+    <PublishAot>false</PublishAot>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IsTrimmable>false</IsTrimmable>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishReadyToRun>true</PublishReadyToRun>
     <!-- Per-Monitor V2 DPI awareness manifest -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     
