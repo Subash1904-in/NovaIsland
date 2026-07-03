@@ -11,7 +11,6 @@
     <PublishTrimmed>false</PublishTrimmed>
     <IsTrimmable>false</IsTrimmable>
     <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
-    <PublishSingleFile>true</PublishSingleFile>
     <PublishReadyToRun>true</PublishReadyToRun>
     <!-- Per-Monitor V2 DPI awareness manifest -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
