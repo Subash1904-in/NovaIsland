@@ -1,0 +1,35 @@
+name: Cloud Build Desktop App
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet Packages
+      run: dotnet restore
+
+    - name: Build and Package
+      # This command compiles the release version and triggers the packaging tools
+      run: msbuild -p:Configuration=Release -p:AppxBundle=Always
+
+    - name: Upload Compiled App
+      uses: actions/upload-artifact@v4
+      with:
+        name: NovaIsland-Release
+        path: '**\bin\Release\**\*'
