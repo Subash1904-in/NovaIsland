@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitionResources xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" revision="1.0" schemaVersion="1.0" xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <displayName>Nova Island Policies</displayName>
+  <description>Enterprise group policies for configuring Nova Island.</description>
+  <resources>
+    <stringTable>
+      <string id="NovaIslandCategory">Nova Island</string>
+      
+      <string id="DisableAI">Disable AI Assistant</string>
+      <string id="DisableAI_Help">This policy setting disables the AI Assistant module within Nova Island.
+
+If you enable this policy setting, the AI Assistant will not be loaded, and no outbound connections to AI providers will be made.
+
+If you disable or do not configure this policy setting, users can access the AI Assistant.</string>
+      
+      <string id="DisablePluginSideloading">Disable Plugin Sideloading</string>
+      <string id="DisablePluginSideloading_Help">This policy setting prevents users from installing unofficial or unsigned plugins.
+
+If you enable this policy setting, Nova Island will only load plugins signed by the enterprise or Microsoft Store.
+
+If you disable or do not configure this policy setting, users can sideload any plugin package.</string>
+      
+      <string id="ForceUpdateChannel">Force Update Channel</string>
+      <string id="ForceUpdateChannel_Help">This policy setting forces the Velopack update client to use a specific release channel.
+
+If you enable this policy setting, you can choose "Stable" or "Canary".
+
+If you disable or do not configure this policy setting, the user can choose their update channel.</string>
+      <string id="Channel_Stable">Stable</string>
+      <string id="Channel_Canary">Canary</string>
+    </stringTable>
+    <presentationTable>
+      <presentation id="ForceUpdateChannel_Presentation">
+        <dropdownList refId="UpdateChannelEnum" defaultItem="0">Update Channel:</dropdownList>
+      </presentation>
+    </presentationTable>
+  </resources>
+</policyDefinitionResources>

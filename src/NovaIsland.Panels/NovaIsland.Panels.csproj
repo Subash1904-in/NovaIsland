@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>NovaIsland.Panels</RootNamespace>
+    <AssemblyName>NovaIsland.Panels</AssemblyName>
+    <Description>Nova Island WinUI 3 secondary panels — settings, marketplace, widget gallery.</Description>
+    <UseWinUI>true</UseWinUI>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <EnablePriGenTooling>false</EnablePriGenTooling>
+    <EnableProjectPriFile>false</EnableProjectPriFile>
+    <AppxPackage>false</AppxPackage>
+    <DisableWinUI8xMsixTooling>true</DisableWinUI8xMsixTooling>
+    <AppxMSBuildTaskAssembly>$(MSBuildThisFileDirectory)..\..\DummyAppxPackage\bin\Debug\netstandard2.0\Microsoft.Build.AppxPackage.dll</AppxMSBuildTaskAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NovaIsland.Application\NovaIsland.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.241114003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
+  </ItemGroup>
+
+  <!-- Workaround for MSIX Tooling tasks that crash during Publish -->
+  <Target Name="ExpandPriContent" />
+</Project>

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>NovaIsland.App</RootNamespace>
+    <AssemblyName>NovaIsland.App</AssemblyName>
+    <Description>Nova Island host — DI composition root, Generic Host entry point, Native AOT entry.</Description>
+    <!-- Opt into trimming analysis for AOT readiness even in debug builds -->
+    <PublishAot>true</PublishAot>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Per-Monitor V2 DPI awareness manifest -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    
+    <!-- MSIX Single-project packaging properties (Enable only when building MSIX to avoid CLI crash) -->
+    <EnableMsixTooling Condition="'$(BuildMsix)' == 'true'">true</EnableMsixTooling>
+    <AppxPackageSigningEnabled Condition="'$(BuildMsix)' == 'true'">true</AppxPackageSigningEnabled>
+    <GenerateAppxPackageOnBuild>false</GenerateAppxPackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NovaIsland.Infrastructure\NovaIsland.Infrastructure.csproj" />
+    <ProjectReference Include="..\NovaIsland.Application\NovaIsland.Application.csproj" />
+    <ProjectReference Include="..\NovaIsland.UI\NovaIsland.UI.csproj" />
+    <ProjectReference Include="..\NovaIsland.Panels\NovaIsland.Panels.csproj" />
+    <ProjectReference Include="..\NovaIsland.Plugins.Host\NovaIsland.Plugins.Host.csproj" />
+  </ItemGroup>
+
+  <!-- Workarounds for MSIX Tooling tasks that crash outside VS -->
+  <Target Name="ExpandPriContent" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
+  <Target Name="RemovePayloadDuplicates" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
+</Project>

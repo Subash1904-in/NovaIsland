@@ -1,0 +1,35 @@
+<Window
+    x:Class="NovaIsland.Panels.MarketplacePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:NovaIsland.Panels"
+    Title="Plugin Marketplace">
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Text="Marketplace" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+        
+        <ListView x:Name="PluginsList" Grid.Row="1">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="local:MarketplaceItemViewModel">
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <StackPanel Width="400">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="Gray"/>
+                        </StackPanel>
+                        <Button Content="Install" Width="100" Margin="10,0" Click="Install_Click" Tag="{Binding PackagePath}"/>
+                        <Button Content="Uninstall" Width="100" Click="Uninstall_Click" Tag="{Binding Id}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,20,0,0">
+            <ToggleSwitch x:Name="TelemetryToggle" Header="Share Anonymous Usage Data" Toggled="TelemetryToggle_Toggled"/>
+        </StackPanel>
+    </Grid>
+</Window>

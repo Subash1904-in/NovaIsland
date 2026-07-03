@@ -1,0 +1,32 @@
+# Build outputs
+bin/
+obj/
+publish/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.csproj.user
+
+# Logs
+logs/
+*.log
+
+# Test results
+test-results/
+TestResults/
+*.trx
+
+# Trace files
+*.nettrace
+*.etl
+
+# NuGet
+packages/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

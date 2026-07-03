@@ -1,0 +1,55 @@
+using System.Runtime.InteropServices;
+using Windows.UI.Composition;
+using Windows.UI.Composition.Desktop;
+
+namespace NovaIsland.UI.Interop;
+
+/// <summary>
+/// Bridges a Win32 HWND to the Windows.UI.Composition visual tree
+/// using <see cref="ICompositorDesktopInterop"/> to create a
+/// <see cref="DesktopWindowTarget"/> bound to the native window.
+/// </summary>
+/// <remarks>
+/// This is the critical link that allows a raw Win32 window to host
+/// a GPU-accelerated Composition visual tree without any XAML dependency.
+/// </remarks>
+internal static class CompositionInterop
+{
+    /// <summary>
+    /// Creates a <see cref="Compositor"/> and binds it to the specified HWND,
+    /// producing a <see cref="DesktopWindowTarget"/> that roots the visual tree.
+    /// </summary>
+    /// <param name="hwnd">The native window handle.</param>
+    /// <param name="compositor">The created Compositor instance.</param>
+    /// <param name="target">The DesktopWindowTarget bound to the HWND.</param>
+    /// <param name="isTopmost">Whether the target should be topmost.</param>
+    internal static void CreateDesktopWindowTarget(
+        nint hwnd,
+        out Compositor compositor,
+        out DesktopWindowTarget target,
+        bool isTopmost = false)
+    {
+        compositor = new Compositor();
+
+        // Get the ICompositorDesktopInterop interface from the Compositor.
+        var interop = (ICompositorDesktopInterop)(object)compositor;
+
+        // Create the DesktopWindowTarget bound to our HWND.
+        interop.CreateDesktopWindowTarget(hwnd, isTopmost, out target);
+    }
+
+    /// <summary>
+    /// COM interface for creating DesktopWindowTarget from a Compositor.
+    /// This is the WinRT interop interface exposed by the Compositor.
+    /// </summary>
+    [ComImport]
+    [Guid("29E691FA-4567-4DCA-B319-D0F207EB6807")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface ICompositorDesktopInterop
+    {
+        void CreateDesktopWindowTarget(
+            nint hwndTarget,
+            [MarshalAs(UnmanagedType.Bool)] bool isTopmost,
+            out DesktopWindowTarget result);
+    }
+}

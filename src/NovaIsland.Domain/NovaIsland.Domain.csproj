@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>NovaIsland.Domain</RootNamespace>
+    <AssemblyName>NovaIsland.Domain</AssemblyName>
+    <Description>Nova Island domain entities, rules, and automation DSL.</Description>
+  </PropertyGroup>
+
+</Project>

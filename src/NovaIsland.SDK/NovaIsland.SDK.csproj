@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>NovaIsland.SDK</RootNamespace>
+    <AssemblyName>NovaIsland.SDK</AssemblyName>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Description>Nova Island public plugin API surface. Targets netstandard2.1 for maximum plugin compatibility.</Description>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" revision="1.0" schemaVersion="1.0" xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <policyNamespaces>
+    <target prefix="novaisland" namespace="NovaIsland.Policies" />
+    <using prefix="windows" namespace="Microsoft.Policies.Windows" />
+  </policyNamespaces>
+  <resources minRequiredRevision="1.0" />
+  <categories>
+    <category name="NovaIslandCategory" displayName="$(string.NovaIslandCategory)">
+      <parentCategory ref="windows:Software" />
+    </category>
+  </categories>
+  <policies>
+    <policy name="DisableAI" class="Both" displayName="$(string.DisableAI)" explainText="$(string.DisableAI_Help)" key="Software\Policies\NovaIsland" valueName="DisableAI">
+      <parentCategory ref="NovaIslandCategory" />
+      <supportedOn ref="windows:SUPPORTED_Windows_10_0" />
+      <enabledValue>
+        <decimal value="1" />
+      </enabledValue>
+      <disabledValue>
+        <decimal value="0" />
+      </disabledValue>
+    </policy>
+    <policy name="DisablePluginSideloading" class="Both" displayName="$(string.DisablePluginSideloading)" explainText="$(string.DisablePluginSideloading_Help)" key="Software\Policies\NovaIsland" valueName="DisablePluginSideloading">
+      <parentCategory ref="NovaIslandCategory" />
+      <supportedOn ref="windows:SUPPORTED_Windows_10_0" />
+      <enabledValue>
+        <decimal value="1" />
+      </enabledValue>
+      <disabledValue>
+        <decimal value="0" />
+      </disabledValue>
+    </policy>
+    <policy name="ForceUpdateChannel" class="Both" displayName="$(string.ForceUpdateChannel)" explainText="$(string.ForceUpdateChannel_Help)" key="Software\Policies\NovaIsland" presentation="$(presentation.ForceUpdateChannel_Presentation)">
+      <parentCategory ref="NovaIslandCategory" />
+      <supportedOn ref="windows:SUPPORTED_Windows_10_0" />
+      <elements>
+        <enum id="UpdateChannelEnum" valueName="UpdateChannel">
+          <item displayName="$(string.Channel_Stable)">
+            <value>
+              <string>Stable</string>
+            </value>
+          </item>
+          <item displayName="$(string.Channel_Canary)">
+            <value>
+              <string>Canary</string>
+            </value>
+          </item>
+        </enum>
+      </elements>
+    </policy>
+  </policies>
+</policyDefinitions>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>NovaIsland.Plugins.Host</RootNamespace>
+    <AssemblyName>NovaIsland.Plugins.Host</AssemblyName>
+    <Description>Nova Island plugin sandbox runtime — process isolation and WASM execution (SRS §7).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NovaIsland.SDK\NovaIsland.SDK.csproj" />
+    <ProjectReference Include="..\NovaIsland.Application\NovaIsland.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StreamJsonRpc" Version="2.25.29" />
+  </ItemGroup>
+
+</Project>

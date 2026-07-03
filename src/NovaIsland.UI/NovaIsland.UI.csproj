@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>NovaIsland.UI</RootNamespace>
+    <AssemblyName>NovaIsland.UI</AssemblyName>
+    <Description>Nova Island shell — Win32 + Windows.UI.Composition island rendering (hot path). No XAML.</Description>
+    <!-- Required for P/Invoke interop with Win32, DWM, and DXGI APIs -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NovaIsland.Application\NovaIsland.Application.csproj" />
+    <ProjectReference Include="..\NovaIsland.Infrastructure\NovaIsland.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

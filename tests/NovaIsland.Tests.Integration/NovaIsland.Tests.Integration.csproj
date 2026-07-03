@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>NovaIsland.Tests.Integration</RootNamespace>
+    <AssemblyName>NovaIsland.Tests.Integration</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Description>Integration tests for Nova Island infrastructure, stability, and host bootstrapping.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="7.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="coverlet.collector" Version="6.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NovaIsland.Infrastructure\NovaIsland.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\NovaIsland.Application\NovaIsland.Application.csproj" />
+    <ProjectReference Include="..\..\src\NovaIsland.Watchdog\NovaIsland.Watchdog.csproj" />
+    <ProjectReference Include="..\..\src\NovaIsland.Plugins.Host\NovaIsland.Plugins.Host.csproj" />
+  </ItemGroup>
+
+</Project>
