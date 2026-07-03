@@ -1,4 +1,5 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <RootNamespace>NovaIsland.Panels</RootNamespace>
@@ -24,6 +25,10 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
   </ItemGroup>
 
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
   <!-- Workaround for MSIX Tooling tasks that crash during Publish -->
   <Target Name="ExpandPriContent" />
+  <Target Name="RemovePayloadDuplicates" />
+  <Target Name="ExpandPayloadDirectories" />
 </Project>

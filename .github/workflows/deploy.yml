@@ -24,11 +24,11 @@ jobs:
     - name: Install Velopack CLI
       run: dotnet tool install -g vpk
 
-    - name: Restore NuGet Packages
-      run: dotnet restore
+    - name: Build and Publish App
+      run: msbuild src\NovaIsland.App\NovaIsland.App.csproj -restore -t:Publish -p:Configuration=Release -p:RuntimeIdentifier=win-x64 -p:SelfContained=true -p:PublishDir="${{ github.workspace }}\publish_output"
 
     - name: Build and Package Installer
-      run: .\build-installer.ps1
+      run: .\build-installer.ps1 -SkipPublish
 
     - name: Upload Installer Artifact
       uses: actions/upload-artifact@v4

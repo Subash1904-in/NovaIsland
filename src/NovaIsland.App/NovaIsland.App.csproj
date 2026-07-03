@@ -1,4 +1,5 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -31,7 +32,10 @@
     <ProjectReference Include="..\NovaIsland.Plugins.Host\NovaIsland.Plugins.Host.csproj" />
   </ItemGroup>
 
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
   <!-- Workarounds for MSIX Tooling tasks that crash outside VS -->
-  <Target Name="ExpandPriContent" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
-  <Target Name="RemovePayloadDuplicates" Condition="'$(BuildingInsideVisualStudio)' != 'true'" />
+  <Target Name="ExpandPriContent" />
+  <Target Name="RemovePayloadDuplicates" />
+  <Target Name="ExpandPayloadDirectories" />
 </Project>

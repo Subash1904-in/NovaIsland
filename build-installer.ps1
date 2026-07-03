@@ -1,7 +1,19 @@
+param(
+    [switch]$SkipPublish
+)
+
 $ErrorActionPreference = "Stop"
 
-Write-Host "Publishing NovaIsland.App..."
-dotnet publish src\NovaIsland.App\NovaIsland.App.csproj -c Release -r win-x64 --self-contained -o publish_output
+if (-not $SkipPublish) {
+    Write-Host "Publishing NovaIsland.App..."
+    dotnet publish src\NovaIsland.App\NovaIsland.App.csproj -c Release -r win-x64 --self-contained -o publish_output
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Publish failed. Please check the errors above."
+        exit $LASTEXITCODE
+    }
+} else {
+    Write-Host "Skipping publish step as requested."
+}
 
 Write-Host "Creating Velopack Installer..."
 $runNumber = $env:GITHUB_RUN_NUMBER
