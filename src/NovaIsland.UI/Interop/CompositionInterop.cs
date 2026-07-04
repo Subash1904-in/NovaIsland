@@ -53,8 +53,10 @@ internal static class CompositionInterop
         // Get the ICompositorDesktopInterop interface from the Compositor using CsWinRT.
         var interop = compositor.As<ICompositorDesktopInterop>();
 
-        // Create the DesktopWindowTarget bound to our HWND.
-        interop.CreateDesktopWindowTarget(hwnd, isTopmost, out target);
+        // Create the DesktopWindowTarget bound to our HWND by receiving an IntPtr first.
+        interop.CreateDesktopWindowTarget(hwnd, isTopmost, out nint targetPtr);
+        
+        target = MarshalInterface<DesktopWindowTarget>.FromAbi(targetPtr);
     }
 
     [DllImport("coremessaging.dll")]
@@ -80,6 +82,6 @@ internal static class CompositionInterop
         void CreateDesktopWindowTarget(
             nint hwndTarget,
             [MarshalAs(UnmanagedType.Bool)] bool isTopmost,
-            out DesktopWindowTarget result);
+            out nint result);
     }
 }
