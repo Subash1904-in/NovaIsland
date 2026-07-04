@@ -45,9 +45,12 @@ internal sealed class IslandContentRenderer : IDisposable
 {
     private readonly Compositor _compositor;
     private readonly SpriteVisual _iconVisual;
-    private readonly SpriteVisual _textVisual;
+
+    private readonly SpriteVisual _titleVisual;
+    private readonly SpriteVisual _subtitleVisual;
     private readonly CompositionSurfaceBrush _iconBrush;
-    private readonly CompositionSurfaceBrush _textBrush;
+    private readonly CompositionSurfaceBrush _titleBrush;
+    private readonly CompositionSurfaceBrush _subtitleBrush;
     
     private readonly ID3D11Device _d3dDevice;
     private readonly IDXGIDevice _dxgiDevice;
@@ -59,7 +62,8 @@ internal sealed class IslandContentRenderer : IDisposable
     private readonly CompositionGraphicsDevice _graphicsDevice;
 
     private CompositionDrawingSurface? _iconSurface;
-    private CompositionDrawingSurface? _textSurface;
+    private CompositionDrawingSurface? _titleSurface;
+    private CompositionDrawingSurface? _subtitleSurface;
     private bool _disposed;
 
     // Cache for decoded bitmaps
@@ -69,7 +73,8 @@ internal sealed class IslandContentRenderer : IDisposable
     private string _currentSubtitle = string.Empty;
 
     public SpriteVisual IconVisual => _iconVisual;
-    public SpriteVisual TextVisual => _textVisual;
+    public SpriteVisual TitleVisual => _titleVisual;
+    public SpriteVisual SubtitleVisual => _subtitleVisual;
 
     public IslandContentRenderer(Compositor compositor)
     {
@@ -107,13 +112,18 @@ internal sealed class IslandContentRenderer : IDisposable
         _iconBrush = _compositor.CreateSurfaceBrush();
         _iconVisual.Brush = _iconBrush;
         _iconVisual.Size = new Vector2(24f, 24f);
-        _iconVisual.Offset = new Vector3(20f, 18f, 0f);
 
-        _textVisual = _compositor.CreateSpriteVisual();
-        _textBrush = _compositor.CreateSurfaceBrush();
-        _textVisual.Brush = _textBrush;
-        _textVisual.Size = new Vector2(300f, 60f);
-        _textVisual.Offset = new Vector3(60f, 12f, 0f);
+        _titleVisual = _compositor.CreateSpriteVisual();
+        _titleBrush = _compositor.CreateSurfaceBrush();
+        _titleVisual.Brush = _titleBrush;
+        _titleVisual.Size = new Vector2(300f, 24f);
+        _titleVisual.Offset = new Vector3(60f, 0f, 0f);
+
+        _subtitleVisual = _compositor.CreateSpriteVisual();
+        _subtitleBrush = _compositor.CreateSurfaceBrush();
+        _subtitleVisual.Brush = _subtitleBrush;
+        _subtitleVisual.Size = new Vector2(300f, 20f);
+        _subtitleVisual.Offset = new Vector3(60f, 0f, 0f);
     }
 
     public void UpdateContent(string title, string subtitle, byte[]? iconBytes)
@@ -178,31 +188,28 @@ internal sealed class IslandContentRenderer : IDisposable
 
     private void DrawText(string title, string subtitle)
     {
-        if (_textSurface == null)
+        if (_titleSurface == null)
         {
-            _textSurface = _graphicsDevice.CreateDrawingSurface(
-                new Windows.Foundation.Size(300, 60), 
+            _titleSurface = _graphicsDevice.CreateDrawingSurface(
+                new Windows.Foundation.Size(300, 24), 
                 Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 
                 Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
-            _textBrush.Surface = _textSurface;
+            _titleBrush.Surface = _titleSurface;
         }
 
-        var surfaceInterop = _textSurface.As<ICompositionDrawingSurfaceInterop>();
+        if (_subtitleSurface == null)
+        {
+            _subtitleSurface = _graphicsDevice.CreateDrawingSurface(
+                new Windows.Foundation.Size(300, 20), 
+                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 
+                Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
+            _subtitleBrush.Surface = _subtitleSurface;
+        }
+
         Guid iid = typeof(IDXGISurface).GUID;
         
         lock (_d2dContext)
         {
-            surfaceInterop.BeginDraw(0, iid, out nint dxgiSurfacePtr, out _);
-            
-            Marshal.AddRef(dxgiSurfacePtr);
-            
-            using var dxgiSurface = new IDXGISurface(dxgiSurfacePtr);
-            using var bitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface);
-            
-            _d2dContext.Target = bitmap;
-            _d2dContext.BeginDraw();
-            _d2dContext.Clear(new Color4(0, 0, 0, 0));
-
             using var solidBrushWhite = _d2dContext.CreateSolidColorBrush(new Color4(1f, 1f, 1f, 1f));
             using var solidBrushGray = _d2dContext.CreateSolidColorBrush(new Color4(0.8f, 0.8f, 0.8f, 1f));
             
@@ -212,17 +219,75 @@ internal sealed class IslandContentRenderer : IDisposable
             using var subtitleFormat = _dwriteFactory.CreateTextFormat("Segoe UI", FontWeight.Normal, FontStyle.Normal, FontStretch.Normal, 12f);
             subtitleFormat.WordWrapping = WordWrapping.NoWrap;
 
-            _d2dContext.DrawText(title, titleFormat, new Rect(0, 0, 300, 20), solidBrushWhite);
-            
-            if (!string.IsNullOrEmpty(subtitle))
+            // Draw title
+            var titleInterop = _titleSurface.As<ICompositionDrawingSurfaceInterop>();
+            titleInterop.BeginDraw(0, iid, out nint titleDxgiPtr, out _);
+            Marshal.AddRef(titleDxgiPtr);
+            using (var dxgiSurface = new IDXGISurface(titleDxgiPtr))
+            using (var bitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface))
             {
-                _d2dContext.DrawText(subtitle, subtitleFormat, new Rect(0, 20, 300, 20), solidBrushGray);
+                _d2dContext.Target = bitmap;
+                _d2dContext.BeginDraw();
+                _d2dContext.Clear(new Color4(0, 0, 0, 0));
+                _d2dContext.DrawText(title, titleFormat, new Rect(0, 0, 300, 24), solidBrushWhite);
+                _d2dContext.EndDraw();
+                _d2dContext.Target = null;
             }
+            titleInterop.EndDraw();
 
-            _d2dContext.EndDraw();
-            _d2dContext.Target = null;
+            // Draw subtitle
+            var subtitleInterop = _subtitleSurface.As<ICompositionDrawingSurfaceInterop>();
+            subtitleInterop.BeginDraw(0, iid, out nint subtitleDxgiPtr, out _);
+            Marshal.AddRef(subtitleDxgiPtr);
+            using (var dxgiSurface = new IDXGISurface(subtitleDxgiPtr))
+            using (var bitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface))
+            {
+                _d2dContext.Target = bitmap;
+                _d2dContext.BeginDraw();
+                _d2dContext.Clear(new Color4(0, 0, 0, 0));
+                if (!string.IsNullOrEmpty(subtitle))
+                {
+                    _d2dContext.DrawText(subtitle, subtitleFormat, new Rect(0, 0, 300, 20), solidBrushGray);
+                }
+                _d2dContext.EndDraw();
+                _d2dContext.Target = null;
+            }
+            subtitleInterop.EndDraw();
+        }
+    }
+
+    public void UpdateLayout(float currentHeight, IslandInteractionState interactionState)
+    {
+        // Base layout logic on height.
+        // Compact height is typically 40.
+        float compactHeight = 40f;
+
+        if (currentHeight <= compactHeight + 0.1f)
+        {
+            // Fully compact
+            _iconVisual.Offset = new Vector3(20f, (currentHeight - 24f) / 2f, 0f);
+            _titleVisual.Offset = new Vector3(60f, (currentHeight - 24f) / 2f, 0f);
+            _subtitleVisual.Offset = new Vector3(60f, currentHeight, 0f); // hidden below
+            _subtitleVisual.Opacity = 0f;
+        }
+        else
+        {
+            // Peek or Expanded (height > 40)
+            float t = Math.Clamp((currentHeight - compactHeight) / 20f, 0f, 1f); // 0 to 1 over first 20px
             
-            surfaceInterop.EndDraw();
+            float iconTop = 16f; // target top padding
+            _iconVisual.Offset = new Vector3(20f, iconTop, 0f);
+            
+            float titleYStart = (compactHeight - 24f) / 2f;
+            float titleYTarget = 8f; // top margin for title in peek/expanded
+            
+            _titleVisual.Offset = new Vector3(60f, titleYStart + (titleYTarget - titleYStart) * t, 0f);
+            
+            float subtitleYStart = compactHeight;
+            float subtitleYTarget = 28f; // just below title
+            
+            _subtitleVisual.Offset = new Vector3(60f, subtitleYStart + (subtitleYTarget - subtitleYStart) * t, 0f);
+            _subtitleVisual.Opacity = t;
         }
     }
 
@@ -292,11 +357,14 @@ internal sealed class IslandContentRenderer : IDisposable
         _bitmapCache.Clear();
 
         _iconSurface?.Dispose();
-        _textSurface?.Dispose();
+        _titleSurface?.Dispose();
+        _subtitleSurface?.Dispose();
         _iconBrush.Dispose();
-        _textBrush.Dispose();
+        _titleBrush.Dispose();
+        _subtitleBrush.Dispose();
         _iconVisual.Dispose();
-        _textVisual.Dispose();
+        _titleVisual.Dispose();
+        _subtitleVisual.Dispose();
         
         _dwriteFactory.Dispose();
         _wicFactory.Dispose();

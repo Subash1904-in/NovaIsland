@@ -36,6 +36,7 @@ internal sealed class IslandVisualTree : IDisposable
     private CompositionRoundedRectangleGeometry? _progressBarGeometry;
     private CompositionSpriteShape? _progressBarShape;
     private IslandContentRenderer? _contentRenderer;
+    private IslandDetailPanel? _detailPanel;
     private bool _disposed;
 
     /// <summary>
@@ -60,7 +61,7 @@ internal sealed class IslandVisualTree : IDisposable
     /// <param name="hwnd">The native window handle to bind to.</param>
     /// <param name="initialWidth">Initial width in logical pixels.</param>
     /// <param name="initialHeight">Initial height in logical pixels.</param>
-    internal void Initialize(nint hwnd, float initialWidth, float initialHeight)
+    internal void Initialize(nint hwnd, float initialWidth, float initialHeight, IslandHitTestRegistry hitTestRegistry, NovaIsland.Domain.Media.IMediaService mediaService, NovaIsland.Application.Modules.NotificationModule notificationModule)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -106,7 +107,12 @@ internal sealed class IslandVisualTree : IDisposable
         // Add content layer
         _contentRenderer = new IslandContentRenderer(compositor);
         _rootVisual.Children.InsertAtTop(_contentRenderer.IconVisual);
-        _rootVisual.Children.InsertAtTop(_contentRenderer.TextVisual);
+        _rootVisual.Children.InsertAtTop(_contentRenderer.TitleVisual);
+        _rootVisual.Children.InsertAtTop(_contentRenderer.SubtitleVisual);
+
+        // Add detail panel layer
+        _detailPanel = new IslandDetailPanel(compositor, hitTestRegistry, mediaService, notificationModule);
+        _rootVisual.Children.InsertAtTop(_detailPanel.RootVisual);
 
         _logger.LogDebug("Composition visual tree initialized: {Width}x{Height}", initialWidth, initialHeight);
     }
@@ -182,11 +188,12 @@ internal sealed class IslandVisualTree : IDisposable
     /// <param name="cornerRadius">Current animated corner radius.</param>
     /// <param name="opacity">Current animated opacity.</param>
     /// <param name="offsetY">Current animated vertical offset.</param>
+    /// <param name="interactionState">The current interaction state.</param>
     /// <remarks>
     /// ZERO-ALLOC: All Vector2/Vector3 values are stack-allocated value types.
     /// Composition property setters are lightweight COM interop calls.
     /// </remarks>
-    internal void ApplyAnimatedValues(float width, float height, float cornerRadius, float opacity, float offsetY)
+    internal void ApplyAnimatedValues(float width, float height, float cornerRadius, float opacity, float offsetY, IslandInteractionState interactionState)
     {
         if (_rootVisual is null || _shapeGeometry is null || _shapeVisual is null) return;
 
@@ -204,6 +211,9 @@ internal sealed class IslandVisualTree : IDisposable
         {
             _progressBarShape.Offset = new Vector2(20f, height - 10f);
         }
+
+        _contentRenderer?.UpdateLayout(height, interactionState);
+        _detailPanel?.UpdateLayout(width, height, interactionState);
     }
 
     /// <summary>
@@ -227,6 +237,8 @@ internal sealed class IslandVisualTree : IDisposable
         if (_disposed) return;
         _disposed = true;
 
+        _detailPanel?.Dispose();
+        _detailPanel = null;
         _contentRenderer?.Dispose();
         _contentRenderer = null;
         _spriteShape = null;

@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics;
+using NovaIsland.UI.Shell;
 
 namespace NovaIsland.UI.Animation;
 
@@ -34,6 +36,7 @@ public sealed class ReducedMotionAnimator : IIslandAnimator
     private bool _isFading;
 
     private IslandState _currentTarget;
+    private IslandInteractionState _currentInteractionTarget;
 
     /// <summary>
     /// Initializes a new <see cref="ReducedMotionAnimator"/> at the specified initial state.
@@ -42,6 +45,7 @@ public sealed class ReducedMotionAnimator : IIslandAnimator
     public ReducedMotionAnimator(IslandState initialState)
     {
         _currentTarget = initialState;
+        _currentInteractionTarget = IslandInteractionState.Idle;
 
         ref readonly var desc = ref IslandStateDescriptors.GetDescriptor(initialState);
         _currentWidth = desc.Width;
@@ -58,6 +62,9 @@ public sealed class ReducedMotionAnimator : IIslandAnimator
     public IslandState CurrentTarget => _currentTarget;
 
     /// <inheritdoc />
+    public IslandInteractionState CurrentInteractionTarget => _currentInteractionTarget;
+
+    /// <inheritdoc />
     public bool IsSettled => !_isFading;
 
     /// <inheritdoc />
@@ -65,16 +72,34 @@ public sealed class ReducedMotionAnimator : IIslandAnimator
     /// Instantly snaps width, height, corner radius, and offset to target values.
     /// Only opacity uses a short cross-fade for visual smoothness.
     /// </remarks>
-    public void TransitionTo(IslandState target)
+    public void TransitionTo(IslandState target, IslandInteractionState interactionTarget = IslandInteractionState.Idle, SpringConfig? overrideConfig = null)
     {
         _currentTarget = target;
+        _currentInteractionTarget = interactionTarget;
 
         ref readonly var desc = ref IslandStateDescriptors.GetDescriptor(target);
 
+        float targetWidth = desc.Width;
+        float targetHeight = desc.Height;
+        float targetCornerRadius = desc.CornerRadius;
+        
+        if (interactionTarget == IslandInteractionState.Peek)
+        {
+            targetWidth = 300f;
+            targetHeight = 60f;
+            targetCornerRadius = 14f;
+        }
+        else if (interactionTarget == IslandInteractionState.FullExpanded)
+        {
+            targetWidth = 400f;
+            targetHeight = 320f;
+            targetCornerRadius = 16f;
+        }
+
         // Snap dimensional properties instantly.
-        _currentWidth = desc.Width;
-        _currentHeight = desc.Height;
-        _currentCornerRadius = desc.CornerRadius;
+        _currentWidth = targetWidth;
+        _currentHeight = targetHeight;
+        _currentCornerRadius = targetCornerRadius;
         _currentOffsetY = desc.OffsetY;
 
         // Start opacity cross-fade if opacity changes.

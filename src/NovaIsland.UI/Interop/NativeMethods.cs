@@ -73,6 +73,17 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetWindowRect(nint hWnd, out RECT lpRect);
 
+    [LibraryImport("user32.dll", EntryPoint = "TrackMouseEvent")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool TrackMouseEvent(ref TRACKMOUSEEVENT lpEventTrack);
+
+    [LibraryImport("user32.dll", EntryPoint = "FindWindowW", StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial nint FindWindowW(string? lpClassName, string? lpWindowName);
+
+    [LibraryImport("user32.dll", EntryPoint = "SetForegroundWindow")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool SetForegroundWindow(nint hWnd);
+
     [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
     internal static partial nint GetModuleHandleW(string? lpModuleName);
 
@@ -123,7 +134,15 @@ internal static partial class NativeMethods
     internal const uint WM_NCHITTEST = 0x0084;
     internal const uint WM_DISPLAYCHANGE = 0x007E;
     internal const uint WM_DPICHANGED = 0x02E0;
+    internal const uint WM_MOUSEMOVE = 0x0200;
+    internal const uint WM_LBUTTONDOWN = 0x0201;
+    internal const uint WM_MOUSEHOVER = 0x02A1;
+    internal const uint WM_MOUSELEAVE = 0x02A3;
     internal const uint WM_USER = 0x0400;
+
+    // TrackMouseEvent flags
+    internal const uint TME_HOVER = 0x00000001;
+    internal const uint TME_LEAVE = 0x00000002;
 
     // Custom messages
     internal const uint WM_ISLAND_TRANSITION = WM_USER + 1;
@@ -249,6 +268,16 @@ internal static partial class NativeMethods
         /// Used for Mica/Acrylic backdrop support.
         /// </summary>
         public static MARGINS EntireClientArea => new() { LeftWidth = -1, RightWidth = -1, TopHeight = -1, BottomHeight = -1 };
+    }
+
+    /// <summary>Win32 TRACKMOUSEEVENT structure.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TRACKMOUSEEVENT
+    {
+        public uint cbSize;
+        public uint dwFlags;
+        public nint hwndTrack;
+        public uint dwHoverTime;
     }
 
     /// <summary>Delegate type for Win32 window procedures.</summary>

@@ -39,6 +39,7 @@ public sealed class IslandShellService : IHostedService, IDisposable
     private PerMonitorDpiHelper? _dpiHelper;
     private readonly NovaIsland.Domain.Media.IMediaService _mediaService;
     private readonly NovaIsland.Application.Modules.NotificationModule _notificationModule;
+    private IslandHitTestRegistry? _hitTestRegistry;
 
     private volatile bool _isStarted;
     private readonly ManualResetEventSlim _windowCreated = new(false);
@@ -76,14 +77,25 @@ public sealed class IslandShellService : IHostedService, IDisposable
     /// Posts a message to the shell's Win32 message loop.
     /// </summary>
     /// <param name="target">The new target state.</param>
-    public void TransitionTo(IslandState target)
+    public void TransitionTo(IslandState target, SpringConfig? overrideConfig = null)
     {
         if (_window is null || !_isStarted) return;
 
-        _animator.TransitionTo(target);
+        _animator.TransitionTo(target, _animator.CurrentInteractionTarget, overrideConfig);
         _framePacing?.Resume();
 
         _logger.LogInformation("Island transition requested: {Target}", target);
+    }
+
+    private void TransitionInteractionTo(IslandInteractionState interactionTarget)
+    {
+        if (_window is null || !_isStarted) return;
+
+        var bounceConfig = new SpringConfig(400f, 26f); // Bouncy transition
+        _animator.TransitionTo(_animator.CurrentTarget, interactionTarget, bounceConfig);
+        _framePacing?.Resume();
+
+        _logger.LogInformation("Island interaction transition requested: {Target}", interactionTarget);
     }
 
     /// <inheritdoc />
@@ -191,9 +203,15 @@ public sealed class IslandShellService : IHostedService, IDisposable
                 return;
             }
 
+            // Initialize Hit Test Registry
+            _hitTestRegistry = new IslandHitTestRegistry();
+
             // Initialize composition visual tree.
             _visualTree = new IslandVisualTree(_loggerFactory.CreateLogger<IslandVisualTree>());
-            _visualTree.Initialize(_window.Hwnd, initialDesc.Width, initialDesc.Height);
+            _visualTree.Initialize(_window.Hwnd, initialDesc.Width, initialDesc.Height, _hitTestRegistry, _mediaService, _notificationModule);
+
+            // Set interaction callbacks on window
+            _window.SetInteractionCallbacks(OnHoverEnter, OnHoverExit, OnClick);
 
             // Query initial DPI.
             _dpiHelper.QueryDpi(_window.Hwnd);
@@ -258,9 +276,46 @@ public sealed class IslandShellService : IHostedService, IDisposable
         _logger.LogInformation("DPI changed to {Dpi}. Island repositioned", newDpi);
     }
 
+    private void OnHoverEnter()
+    {
+        if (_animator.CurrentInteractionTarget == IslandInteractionState.Idle)
+        {
+            TransitionInteractionTo(IslandInteractionState.Peek);
+        }
+    }
+
+    private void OnHoverExit()
+    {
+        if (_animator.CurrentInteractionTarget == IslandInteractionState.Peek)
+        {
+            TransitionInteractionTo(IslandInteractionState.Idle);
+        }
+    }
+
+    private void OnClick(int x, int y)
+    {
+        if (_hitTestRegistry != null && _hitTestRegistry.HitTest(x, y))
+        {
+            // If a registered item was clicked (e.g., Now Playing), return to Idle
+            TransitionInteractionTo(IslandInteractionState.Idle);
+            return;
+        }
+
+        // Otherwise, toggle interaction state
+        if (_animator.CurrentInteractionTarget == IslandInteractionState.Idle || _animator.CurrentInteractionTarget == IslandInteractionState.Peek)
+        {
+            TransitionInteractionTo(IslandInteractionState.FullExpanded);
+        }
+        else if (_animator.CurrentInteractionTarget == IslandInteractionState.FullExpanded)
+        {
+            TransitionInteractionTo(IslandInteractionState.Idle);
+        }
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
         _windowCreated.Dispose();
+        _hitTestRegistry?.Clear();
     }
 }

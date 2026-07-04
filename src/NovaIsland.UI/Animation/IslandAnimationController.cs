@@ -1,3 +1,5 @@
+using NovaIsland.UI.Shell;
+
 namespace NovaIsland.UI.Animation;
 
 /// <summary>
@@ -34,6 +36,7 @@ public sealed class IslandAnimationController : IIslandAnimator
 
     private SpringConfig _config;
     private IslandState _currentTarget;
+    private IslandInteractionState _currentInteractionTarget;
 
     /// <summary>
     /// Initializes a new <see cref="IslandAnimationController"/> at the specified initial state.
@@ -44,6 +47,7 @@ public sealed class IslandAnimationController : IIslandAnimator
     {
         _config = config;
         _currentTarget = initialState;
+        _currentInteractionTarget = IslandInteractionState.Idle;
 
         ref readonly var desc = ref IslandStateDescriptors.GetDescriptor(initialState);
 
@@ -63,6 +67,9 @@ public sealed class IslandAnimationController : IIslandAnimator
 
     /// <inheritdoc />
     public IslandState CurrentTarget => _currentTarget;
+
+    /// <inheritdoc />
+    public IslandInteractionState CurrentInteractionTarget => _currentInteractionTarget;
 
     /// <inheritdoc />
     public bool IsSettled =>
@@ -87,9 +94,15 @@ public sealed class IslandAnimationController : IIslandAnimator
     /// Velocity is preserved, making the transition interruptible — a new target
     /// smoothly redirects the in-flight animation rather than restarting it.
     /// </remarks>
-    public void TransitionTo(IslandState target)
+    public void TransitionTo(IslandState target, IslandInteractionState interactionTarget = IslandInteractionState.Idle, SpringConfig? overrideConfig = null)
     {
         _currentTarget = target;
+        _currentInteractionTarget = interactionTarget;
+
+        if (overrideConfig.HasValue)
+        {
+            _config = overrideConfig.Value;
+        }
 
         ref readonly var desc = ref IslandStateDescriptors.GetDescriptor(target);
 
@@ -99,6 +112,19 @@ public sealed class IslandAnimationController : IIslandAnimator
         _targetCornerRadius = desc.CornerRadius;
         _targetOpacity = desc.Opacity;
         _targetOffsetY = desc.OffsetY;
+
+        if (interactionTarget == IslandInteractionState.Peek)
+        {
+            _targetWidth = 300f;
+            _targetHeight = 60f;
+            _targetCornerRadius = 14f;
+        }
+        else if (interactionTarget == IslandInteractionState.FullExpanded)
+        {
+            _targetWidth = 400f;
+            _targetHeight = 320f;
+            _targetCornerRadius = 16f;
+        }
     }
 
     /// <inheritdoc />

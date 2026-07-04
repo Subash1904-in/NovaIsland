@@ -148,7 +148,7 @@ internal sealed class FramePacingService : IDisposable
             out float cornerRadius, out float opacity, out float offsetY);
 
         // Apply to visual tree (Composition API calls, GPU-side).
-        _visualTree.ApplyAnimatedValues(width, height, cornerRadius, opacity, offsetY);
+        _visualTree.ApplyAnimatedValues(width, height, cornerRadius, opacity, offsetY, _animator.CurrentInteractionTarget);
 
         // Reposition the Win32 window to match animated size.
         // Center horizontally on the primary monitor.

@@ -33,6 +33,11 @@ internal sealed class IslandWindow : IDisposable
     // Callbacks for window events.
     private Action? _onDisplayChange;
     private Action<uint>? _onDpiChanged;
+    private Action? _onHoverEnter;
+    private Action? _onHoverExit;
+    private Action<int, int>? _onClick;
+
+    private bool _isTrackingMouse;
 
     /// <summary>The native window handle.</summary>
     internal nint Hwnd => _hwnd;
@@ -56,6 +61,16 @@ internal sealed class IslandWindow : IDisposable
     /// Sets the callback invoked when WM_DPICHANGED is received.
     /// </summary>
     internal void SetDpiChangedCallback(Action<uint> callback) => _onDpiChanged = callback;
+
+    /// <summary>
+    /// Sets the callbacks for interaction events.
+    /// </summary>
+    internal void SetInteractionCallbacks(Action onHoverEnter, Action onHoverExit, Action<int, int> onClick)
+    {
+        _onHoverEnter = onHoverEnter;
+        _onHoverExit = onHoverExit;
+        _onClick = onClick;
+    }
 
     /// <summary>
     /// Creates the Win32 window and applies DWM attributes.
@@ -216,6 +231,40 @@ internal sealed class IslandWindow : IDisposable
             {
                 // Return HTCLIENT to receive mouse messages, or HTTRANSPARENT to pass through.
                 return HTCLIENT;
+            }
+            case WM_MOUSEMOVE:
+            {
+                if (!_isTrackingMouse)
+                {
+                    _isTrackingMouse = true;
+                    var tme = new TRACKMOUSEEVENT
+                    {
+                        cbSize = (uint)Marshal.SizeOf<TRACKMOUSEEVENT>(),
+                        dwFlags = TME_HOVER | TME_LEAVE,
+                        hwndTrack = hWnd,
+                        dwHoverTime = 150
+                    };
+                    TrackMouseEvent(ref tme);
+                }
+                return 0;
+            }
+            case WM_MOUSEHOVER:
+            {
+                _onHoverEnter?.Invoke();
+                return 0;
+            }
+            case WM_MOUSELEAVE:
+            {
+                _isTrackingMouse = false;
+                _onHoverExit?.Invoke();
+                return 0;
+            }
+            case WM_LBUTTONDOWN:
+            {
+                int x = (short)(lParam.ToInt64() & 0xFFFF);
+                int y = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
+                _onClick?.Invoke(x, y);
+                return 0;
             }
             case WM_CLOSE:
             {

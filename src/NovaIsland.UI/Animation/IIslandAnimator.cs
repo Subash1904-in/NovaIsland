@@ -1,3 +1,6 @@
+using System.Numerics;
+using NovaIsland.UI.Shell;
+
 namespace NovaIsland.UI.Animation;
 
 /// <summary>
@@ -17,6 +20,11 @@ public interface IIslandAnimator
     IslandState CurrentTarget { get; }
 
     /// <summary>
+    /// Gets the current interaction state.
+    /// </summary>
+    IslandInteractionState CurrentInteractionTarget { get; }
+
+    /// <summary>
     /// Gets a value indicating whether the animation has settled (converged to target).
     /// When true, the frame-pacing service may pause updates to save CPU.
     /// </summary>
@@ -27,7 +35,9 @@ public interface IIslandAnimator
     /// the spring re-targets without resetting velocity (interruptible transition).
     /// </summary>
     /// <param name="target">The new target state.</param>
-    void TransitionTo(IslandState target);
+    /// <param name="interactionTarget">The new interaction target state.</param>
+    /// <param name="overrideConfig">Optional config to override the current config.</param>
+    void TransitionTo(IslandState target, IslandInteractionState interactionTarget = IslandInteractionState.Idle, SpringConfig? overrideConfig = null);
 
     /// <summary>
     /// Advances the animation by the given delta time. Called once per frame.
