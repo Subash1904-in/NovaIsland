@@ -26,7 +26,7 @@ internal partial interface ICompositorInterop
 }
 
 [GeneratedComInterface]
-[Guid("A1BEA8BA-D726-4663-8129-6B5E7927FFA6")]
+[Guid("FD04E6E3-FE0C-4C3C-AB19-A07601A576EE")]
 internal partial interface ICompositionDrawingSurfaceInterop
 {
     void BeginDraw(nint updateRect, in Guid iid, out nint updateObject, out System.Drawing.Point offset);
@@ -72,9 +72,17 @@ internal sealed class IslandContentRenderer : IDisposable
         _compositor = compositor;
         
         // 1. Initialize Direct3D / DXGI
-        D3D11.D3D11CreateDevice(
+        var hr = D3D11.D3D11CreateDevice(
             null, DriverType.Hardware, DeviceCreationFlags.BgraSupport, 
-            null, out _d3dDevice).CheckError();
+            null, out _d3dDevice);
+            
+        if (hr.Failure)
+        {
+            D3D11.D3D11CreateDevice(
+                null, DriverType.Warp, DeviceCreationFlags.BgraSupport, 
+                null, out _d3dDevice).CheckError();
+        }
+
         _dxgiDevice = _d3dDevice.QueryInterface<IDXGIDevice>();
 
         // 2. Initialize Direct2D / DirectWrite / WIC
@@ -124,24 +132,31 @@ internal sealed class IslandContentRenderer : IDisposable
                 
                 if (_bitmapCache.TryGetValue(hash, out var cachedBitmap))
                 {
-                    DrawIcon(cachedBitmap);
+                    lock (_d2dContext)
+                    {
+                        DrawIcon(cachedBitmap);
+                    }
                 }
                 else
                 {
+                    string capturedHash = hash;
                     // Asynchronous decode to avoid blocking hot path
                     Task.Run(() => 
                     {
                         try 
                         {
                             var bitmap = DecodeImage(iconBytes);
-                            _bitmapCache[hash] = bitmap;
+                            _bitmapCache[capturedHash] = bitmap;
                             // Need to dispatch to UI thread or since D2D context is single threaded,
                             // we lock or just draw. We can invoke a method to draw on the correct thread.
                             // For this simplified example, we'll draw it directly if thread safety allows,
                             // or ideally enqueue to a dispatcher. We'll draw it.
                             lock (_d2dContext)
                             {
-                                DrawIcon(bitmap);
+                                if (_currentIconHash == capturedHash && !_disposed)
+                                {
+                                    DrawIcon(bitmap);
+                                }
                             }
                         }
                         catch 
@@ -172,13 +187,16 @@ internal sealed class IslandContentRenderer : IDisposable
 
         var surfaceInterop = _textSurface.As<ICompositionDrawingSurfaceInterop>();
         Guid iid = typeof(IDXGISurface).GUID;
-        surfaceInterop.BeginDraw(0, iid, out nint dxgiSurfacePtr, out _);
-        
-        using var dxgiSurface = new IDXGISurface(dxgiSurfacePtr);
-        using var bitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface);
         
         lock (_d2dContext)
         {
+            surfaceInterop.BeginDraw(0, iid, out nint dxgiSurfacePtr, out _);
+            
+            Marshal.AddRef(dxgiSurfacePtr);
+            
+            using var dxgiSurface = new IDXGISurface(dxgiSurfacePtr);
+            using var bitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface);
+            
             _d2dContext.Target = bitmap;
             _d2dContext.BeginDraw();
             _d2dContext.Clear(new Color4(0, 0, 0, 0));
@@ -202,9 +220,9 @@ internal sealed class IslandContentRenderer : IDisposable
 
             _d2dContext.EndDraw();
             _d2dContext.Target = null;
+            
+            surfaceInterop.EndDraw();
         }
-        
-        surfaceInterop.EndDraw();
     }
 
     private void DrawIcon(ID2D1Bitmap bitmap)
@@ -220,19 +238,25 @@ internal sealed class IslandContentRenderer : IDisposable
 
         var surfaceInterop = _iconSurface.As<ICompositionDrawingSurfaceInterop>();
         Guid iid = typeof(IDXGISurface).GUID;
-        surfaceInterop.BeginDraw(0, iid, out nint dxgiSurfacePtr, out _);
         
-        using var dxgiSurface = new IDXGISurface(dxgiSurfacePtr);
-        using var targetBitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface);
-        
-        _d2dContext.Target = targetBitmap;
-        _d2dContext.BeginDraw();
-        _d2dContext.Clear(new Color4(0, 0, 0, 0));
-        _d2dContext.DrawBitmap(bitmap, new System.Drawing.RectangleF(0, 0, 24, 24), 1.0f, BitmapInterpolationMode.Linear);
-        _d2dContext.EndDraw();
-        _d2dContext.Target = null;
-        
-        surfaceInterop.EndDraw();
+        lock (_d2dContext)
+        {
+            surfaceInterop.BeginDraw(0, iid, out nint dxgiSurfacePtr, out _);
+            
+            Marshal.AddRef(dxgiSurfacePtr);
+            
+            using var dxgiSurface = new IDXGISurface(dxgiSurfacePtr);
+            using var targetBitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface);
+            
+            _d2dContext.Target = targetBitmap;
+            _d2dContext.BeginDraw();
+            _d2dContext.Clear(new Color4(0, 0, 0, 0));
+            _d2dContext.DrawBitmap(bitmap, new System.Drawing.RectangleF(0, 0, 24, 24), 1.0f, BitmapInterpolationMode.Linear);
+            _d2dContext.EndDraw();
+            _d2dContext.Target = null;
+            
+            surfaceInterop.EndDraw();
+        }
     }
 
     private ID2D1Bitmap DecodeImage(byte[] imageBytes)
