@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Windows.UI.Composition;
 using Windows.UI.Composition.Desktop;
+using WinRT;
 
 namespace NovaIsland.UI.Interop;
 
@@ -49,8 +50,8 @@ internal static class CompositionInterop
 
         compositor = new Compositor();
 
-        // Get the ICompositorDesktopInterop interface from the Compositor.
-        var interop = (ICompositorDesktopInterop)(object)compositor;
+        // Get the ICompositorDesktopInterop interface from the Compositor using CsWinRT.
+        var interop = compositor.As<ICompositorDesktopInterop>();
 
         // Create the DesktopWindowTarget bound to our HWND.
         interop.CreateDesktopWindowTarget(hwnd, isTopmost, out target);
