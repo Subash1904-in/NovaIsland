@@ -37,10 +37,10 @@ public sealed class IslandSettings
     public IslandState InitialState { get; set; } = IslandState.Compact;
 
     /// <summary>Compact state width in logical pixels.</summary>
-    public float CompactWidth { get; set; } = 220f;
+    public float CompactWidth { get; set; } = 160f;
 
     /// <summary>Compact state height in logical pixels.</summary>
-    public float CompactHeight { get; set; } = 40f;
+    public float CompactHeight { get; set; } = 16f;
 
     /// <summary>Expanded state width in logical pixels.</summary>
     public float ExpandedWidth { get; set; } = 400f;
@@ -79,12 +79,12 @@ public sealed class IslandSettings
     public void ApplyDimensionOverrides()
     {
         IslandStateDescriptors.SetDescriptor(IslandState.Compact,
-            new IslandStateDescriptor(CompactWidth, CompactHeight, 20f, 1.0f, 8f));
+            new IslandStateDescriptor(CompactWidth, CompactHeight, 16f, 1.0f, 0f));
         IslandStateDescriptors.SetDescriptor(IslandState.Expanded,
-            new IslandStateDescriptor(ExpandedWidth, ExpandedHeight, 16f, 1.0f, 8f));
+            new IslandStateDescriptor(ExpandedWidth, ExpandedHeight, 16f, 1.0f, 0f));
         IslandStateDescriptors.SetDescriptor(IslandState.Minimal,
-            new IslandStateDescriptor(MinimalWidth, MinimalHeight, 4f, 0.7f, 2f));
+            new IslandStateDescriptor(MinimalWidth, MinimalHeight, 4f, 0.7f, 0f));
         IslandStateDescriptors.SetDescriptor(IslandState.Alert,
-            new IslandStateDescriptor(AlertWidth, AlertHeight, 14f, 1.0f, 8f));
+            new IslandStateDescriptor(AlertWidth, AlertHeight, 14f, 1.0f, 0f));
     }
 }

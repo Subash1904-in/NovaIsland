@@ -49,26 +49,28 @@ internal sealed class IslandDetailPanel : IDisposable
         // In a full implementation, this would draw the rows using Composition surface brushes.
         // For now, we set up the hit-test bounds based on fixed offsets.
         
-        // We'll create a dummy "Now Playing" row hit rect just below the compact area.
-        float rowHeight = 40f;
-        float currentY = 50f; // Start below the main title/subtitle
-
-        // Example: Now Playing row
-        var nowPlayingRect = new System.Drawing.RectangleF(0, currentY, width, rowHeight);
-        _hitTestRegistry.Register(nowPlayingRect, () => 
+        // Media controls are drawn at Offset (50, 200). Size is (300, 40).
+        // Hit regions for Previous, Play/Pause, Next (each is 100 wide)
+        float controlsY = 200f;
+        float controlsX = 50f;
+        
+        var prevRect = new System.Drawing.RectangleF(controlsX, controlsY, 100f, 40f);
+        _hitTestRegistry.Register(prevRect, () => 
         {
-            // Try to bring media player to foreground
-            // We use FindWindow as a placeholder for actual player resolution
-            nint hwnd = FindWindowW(null, "Spotify Premium");
-            if (hwnd == 0) hwnd = FindWindowW(null, "Media Player");
-            
-            if (hwnd != 0)
-            {
-                SetForegroundWindow(hwnd);
-            }
+            _ = _mediaService.PreviousAsync();
         });
 
-        currentY += rowHeight;
+        var playPauseRect = new System.Drawing.RectangleF(controlsX + 100f, controlsY, 100f, 40f);
+        _hitTestRegistry.Register(playPauseRect, () => 
+        {
+            _ = _mediaService.PlayPauseAsync();
+        });
+
+        var nextRect = new System.Drawing.RectangleF(controlsX + 200f, controlsY, 100f, 40f);
+        _hitTestRegistry.Register(nextRect, () => 
+        {
+            _ = _mediaService.NextAsync();
+        });
 
         // More rows could be added here for clipboard/notifications...
     }

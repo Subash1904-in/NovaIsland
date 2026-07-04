@@ -109,6 +109,7 @@ internal sealed class IslandVisualTree : IDisposable
         _rootVisual.Children.InsertAtTop(_contentRenderer.IconVisual);
         _rootVisual.Children.InsertAtTop(_contentRenderer.TitleVisual);
         _rootVisual.Children.InsertAtTop(_contentRenderer.SubtitleVisual);
+        _rootVisual.Children.InsertAtTop(_contentRenderer.MediaControlsVisual);
 
         // Add detail panel layer
         _detailPanel = new IslandDetailPanel(compositor, hitTestRegistry, mediaService, notificationModule);
@@ -209,7 +210,7 @@ internal sealed class IslandVisualTree : IDisposable
         // Keep progress bar at the bottom
         if (_progressBarShape != null)
         {
-            _progressBarShape.Offset = new Vector2(20f, height - 10f);
+            _progressBarShape.Offset = new Vector2(20f, height - 6f); // Slightly higher from bottom
         }
 
         _contentRenderer?.UpdateLayout(height, interactionState);

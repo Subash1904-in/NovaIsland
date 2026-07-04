@@ -138,6 +138,8 @@ internal static partial class NativeMethods
     internal const uint WM_LBUTTONDOWN = 0x0201;
     internal const uint WM_MOUSEHOVER = 0x02A1;
     internal const uint WM_MOUSELEAVE = 0x02A3;
+    internal const uint WM_WINDOWPOSCHANGING = 0x0046;
+    internal const uint WM_SHOWWINDOW = 0x0018;
     internal const uint WM_USER = 0x0400;
 
     // TrackMouseEvent flags
@@ -156,9 +158,12 @@ internal static partial class NativeMethods
     internal const int SW_HIDE = 0;
 
     // SetWindowPos flags
-    internal const uint SWP_NOACTIVATE = 0x0010;
+    internal const uint SWP_NOSIZE = 0x0001;
+    internal const uint SWP_NOMOVE = 0x0002;
     internal const uint SWP_NOZORDER = 0x0004;
+    internal const uint SWP_NOACTIVATE = 0x0010;
     internal const uint SWP_SHOWWINDOW = 0x0040;
+    internal const uint SWP_HIDEWINDOW = 0x0080;
 
     // SetWindowPos z-order
     internal static readonly nint HWND_TOPMOST = -1;
@@ -278,6 +283,19 @@ internal static partial class NativeMethods
         public uint dwFlags;
         public nint hwndTrack;
         public uint dwHoverTime;
+    }
+
+    /// <summary>Win32 WINDOWPOS structure.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WINDOWPOS
+    {
+        public nint hwnd;
+        public nint hwndInsertAfter;
+        public int x;
+        public int y;
+        public int cx;
+        public int cy;
+        public uint flags;
     }
 
     /// <summary>Delegate type for Win32 window procedures.</summary>

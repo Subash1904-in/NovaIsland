@@ -48,9 +48,11 @@ internal sealed class IslandContentRenderer : IDisposable
 
     private readonly SpriteVisual _titleVisual;
     private readonly SpriteVisual _subtitleVisual;
+    private readonly SpriteVisual _mediaControlsVisual;
     private readonly CompositionSurfaceBrush _iconBrush;
     private readonly CompositionSurfaceBrush _titleBrush;
     private readonly CompositionSurfaceBrush _subtitleBrush;
+    private readonly CompositionSurfaceBrush _mediaControlsBrush;
     
     private readonly ID3D11Device _d3dDevice;
     private readonly IDXGIDevice _dxgiDevice;
@@ -64,6 +66,7 @@ internal sealed class IslandContentRenderer : IDisposable
     private CompositionDrawingSurface? _iconSurface;
     private CompositionDrawingSurface? _titleSurface;
     private CompositionDrawingSurface? _subtitleSurface;
+    private CompositionDrawingSurface? _mediaControlsSurface;
     private bool _disposed;
 
     // Cache for decoded bitmaps
@@ -75,6 +78,7 @@ internal sealed class IslandContentRenderer : IDisposable
     public SpriteVisual IconVisual => _iconVisual;
     public SpriteVisual TitleVisual => _titleVisual;
     public SpriteVisual SubtitleVisual => _subtitleVisual;
+    public SpriteVisual MediaControlsVisual => _mediaControlsVisual;
 
     public IslandContentRenderer(Compositor compositor)
     {
@@ -124,6 +128,14 @@ internal sealed class IslandContentRenderer : IDisposable
         _subtitleVisual.Brush = _subtitleBrush;
         _subtitleVisual.Size = new Vector2(300f, 20f);
         _subtitleVisual.Offset = new Vector3(60f, 0f, 0f);
+
+        _mediaControlsVisual = _compositor.CreateSpriteVisual();
+        _mediaControlsBrush = _compositor.CreateSurfaceBrush();
+        _mediaControlsVisual.Brush = _mediaControlsBrush;
+        _mediaControlsVisual.Size = new Vector2(300f, 40f);
+        _mediaControlsVisual.Offset = new Vector3(50f, 200f, 0f);
+        
+        DrawMediaControls();
     }
 
     public void UpdateContent(string title, string subtitle, byte[]? iconBytes)
@@ -256,38 +268,93 @@ internal sealed class IslandContentRenderer : IDisposable
         }
     }
 
+    private void DrawMediaControls()
+    {
+        if (_mediaControlsSurface == null)
+        {
+            _mediaControlsSurface = _graphicsDevice.CreateDrawingSurface(
+                new Windows.Foundation.Size(300, 40), 
+                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 
+                Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
+            _mediaControlsBrush.Surface = _mediaControlsSurface;
+        }
+
+        Guid iid = typeof(IDXGISurface).GUID;
+        
+        lock (_d2dContext)
+        {
+            using var solidBrushWhite = _d2dContext.CreateSolidColorBrush(new Color4(1f, 1f, 1f, 1f));
+            using var iconFormat = _dwriteFactory.CreateTextFormat("Segoe Fluent Icons", FontWeight.Normal, FontStyle.Normal, FontStretch.Normal, 24f);
+            iconFormat.TextAlignment = TextAlignment.Center;
+            
+            var controlsInterop = _mediaControlsSurface.As<ICompositionDrawingSurfaceInterop>();
+            controlsInterop.BeginDraw(0, iid, out nint dxgiPtr, out _);
+            Marshal.AddRef(dxgiPtr);
+            using (var dxgiSurface = new IDXGISurface(dxgiPtr))
+            using (var bitmap = _d2dContext.CreateBitmapFromDxgiSurface(dxgiSurface))
+            {
+                _d2dContext.Target = bitmap;
+                _d2dContext.BeginDraw();
+                _d2dContext.Clear(new Color4(0, 0, 0, 0));
+                
+                // Draw Previous, Play/Pause, Next
+                // \uE892 = Prev, \uE768 = Play, \uE893 = Next
+                _d2dContext.DrawText("\uE892", iconFormat, new Rect(0, 0, 100, 40), solidBrushWhite);
+                _d2dContext.DrawText("\uE768", iconFormat, new Rect(100, 0, 100, 40), solidBrushWhite);
+                _d2dContext.DrawText("\uE893", iconFormat, new Rect(200, 0, 100, 40), solidBrushWhite);
+                
+                _d2dContext.EndDraw();
+                _d2dContext.Target = null;
+            }
+            controlsInterop.EndDraw();
+        }
+    }
+
     public void UpdateLayout(float currentHeight, IslandInteractionState interactionState)
     {
         // Base layout logic on height.
-        // Compact height is typically 40.
-        float compactHeight = 40f;
+        float idleHeight = 16f;
 
-        if (currentHeight <= compactHeight + 0.1f)
+        if (currentHeight <= idleHeight + 0.1f)
         {
-            // Fully compact
-            _iconVisual.Offset = new Vector3(20f, (currentHeight - 24f) / 2f, 0f);
-            _titleVisual.Offset = new Vector3(60f, (currentHeight - 24f) / 2f, 0f);
-            _subtitleVisual.Offset = new Vector3(60f, currentHeight, 0f); // hidden below
+            // Fully idle (black pill)
+            _iconVisual.Opacity = 0f;
+            _titleVisual.Opacity = 0f;
             _subtitleVisual.Opacity = 0f;
+            _mediaControlsVisual.Opacity = 0f;
+        }
+        else if (currentHeight <= 60.1f)
+        {
+            // Peek (height up to 60)
+            float t = Math.Clamp((currentHeight - idleHeight) / (60f - idleHeight), 0f, 1f); 
+            _iconVisual.Opacity = t;
+            _titleVisual.Opacity = t;
+            _subtitleVisual.Opacity = t;
+            _mediaControlsVisual.Opacity = 0f; // Hidden in peek
+            
+            float iconTop = 16f;
+            _iconVisual.Offset = new Vector3(20f, iconTop, 0f);
+            
+            _titleVisual.Offset = new Vector3(60f, 8f, 0f);
+            _subtitleVisual.Offset = new Vector3(60f, 28f, 0f);
         }
         else
         {
-            // Peek or Expanded (height > 40)
-            float t = Math.Clamp((currentHeight - compactHeight) / 20f, 0f, 1f); // 0 to 1 over first 20px
+            // FullExpanded (height > 60)
+            float t = Math.Clamp((currentHeight - 60f) / (320f - 60f), 0f, 1f);
+            _iconVisual.Opacity = 1f;
+            _titleVisual.Opacity = 1f;
+            _subtitleVisual.Opacity = 1f;
+            _mediaControlsVisual.Opacity = t;
             
-            float iconTop = 16f; // target top padding
-            _iconVisual.Offset = new Vector3(20f, iconTop, 0f);
+            // Move visuals around for expanded state
+            // Icon moves down and gets some margin, maybe scales if we used transforms.
+            _iconVisual.Offset = new Vector3(20f, 16f + (20f * t), 0f);
+            _titleVisual.Offset = new Vector3(60f, 8f + (20f * t), 0f);
+            _subtitleVisual.Offset = new Vector3(60f, 28f + (20f * t), 0f);
             
-            float titleYStart = (compactHeight - 24f) / 2f;
-            float titleYTarget = 8f; // top margin for title in peek/expanded
-            
-            _titleVisual.Offset = new Vector3(60f, titleYStart + (titleYTarget - titleYStart) * t, 0f);
-            
-            float subtitleYStart = compactHeight;
-            float subtitleYTarget = 28f; // just below title
-            
-            _subtitleVisual.Offset = new Vector3(60f, subtitleYStart + (subtitleYTarget - subtitleYStart) * t, 0f);
-            _subtitleVisual.Opacity = t;
+            // Media controls fade in and position at the bottom
+            _mediaControlsVisual.Offset = new Vector3(50f, 200f, 0f);
         }
     }
 
@@ -359,12 +426,15 @@ internal sealed class IslandContentRenderer : IDisposable
         _iconSurface?.Dispose();
         _titleSurface?.Dispose();
         _subtitleSurface?.Dispose();
+        _mediaControlsSurface?.Dispose();
         _iconBrush.Dispose();
         _titleBrush.Dispose();
         _subtitleBrush.Dispose();
+        _mediaControlsBrush.Dispose();
         _iconVisual.Dispose();
         _titleVisual.Dispose();
         _subtitleVisual.Dispose();
+        _mediaControlsVisual.Dispose();
         
         _dwriteFactory.Dispose();
         _wicFactory.Dispose();

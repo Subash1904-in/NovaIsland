@@ -296,8 +296,9 @@ public sealed class IslandShellService : IHostedService, IDisposable
     {
         if (_hitTestRegistry != null && _hitTestRegistry.HitTest(x, y))
         {
-            // If a registered item was clicked (e.g., Now Playing), return to Idle
-            TransitionInteractionTo(IslandInteractionState.Idle);
+            // If a registered item was clicked (e.g., Media Controls), return to Idle
+            // Actually, for media controls we might not want to return to idle.
+            // Let the hit test callback decide. But for now we just return.
             return;
         }
 
@@ -308,6 +309,14 @@ public sealed class IslandShellService : IHostedService, IDisposable
         }
         else if (_animator.CurrentInteractionTarget == IslandInteractionState.FullExpanded)
         {
+            // Next click should go to app
+            nint hwnd = FindWindowW(null, "Spotify Premium");
+            if (hwnd == 0) hwnd = FindWindowW(null, "Media Player");
+            if (hwnd != 0)
+            {
+                SetForegroundWindow(hwnd);
+            }
+            
             TransitionInteractionTo(IslandInteractionState.Idle);
         }
     }

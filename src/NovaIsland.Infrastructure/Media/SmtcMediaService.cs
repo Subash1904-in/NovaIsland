@@ -122,6 +122,30 @@ public class SmtcMediaService : IMediaService, IDisposable
         }
     }
 
+    public async Task PlayPauseAsync()
+    {
+        if (_currentSession != null)
+        {
+            await _currentSession.TryTogglePlayPauseAsync();
+        }
+    }
+
+    public async Task PreviousAsync()
+    {
+        if (_currentSession != null)
+        {
+            await _currentSession.TrySkipPreviousAsync();
+        }
+    }
+
+    public async Task NextAsync()
+    {
+        if (_currentSession != null)
+        {
+            await _currentSession.TrySkipNextAsync();
+        }
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

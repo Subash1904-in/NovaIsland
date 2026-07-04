@@ -159,6 +159,9 @@ internal sealed class FramePacingService : IDisposable
         int y = (int)offsetY;
         _window.Reposition(x, y, physicalWidth, physicalHeight);
 
+        // Periodically enforce topmost Z-order to survive minimize-all
+        _window.BringToFront();
+
         // Track frame time for perf monitoring.
         long frameEndTicks = _stopwatch.ElapsedTicks;
         _lastFrameTimeMs = (float)(frameEndTicks - currentTicks) / Stopwatch.Frequency * 1000f;

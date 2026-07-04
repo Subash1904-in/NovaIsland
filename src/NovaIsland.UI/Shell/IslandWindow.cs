@@ -163,6 +163,16 @@ internal sealed class IslandWindow : IDisposable
     }
 
     /// <summary>
+    /// Brings the window to the top of the Z-order without activating it.
+    /// This is aggressively called to ensure it stays above all other windows.
+    /// </summary>
+    internal void BringToFront()
+    {
+        if (_hwnd == 0) return;
+        SetWindowPos(_hwnd, -1, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+
+    /// <summary>
     /// Runs the Win32 message loop. Blocks until WM_QUIT is received.
     /// Must be called on the STA thread.
     /// </summary>
@@ -231,6 +241,26 @@ internal sealed class IslandWindow : IDisposable
             {
                 // Return HTCLIENT to receive mouse messages, or HTTRANSPARENT to pass through.
                 return HTCLIENT;
+            }
+            case WM_WINDOWPOSCHANGING:
+            {
+                // Prevent Win+D or other operations from hiding the window or sending it behind
+                var wp = Marshal.PtrToStructure<WINDOWPOS>(lParam);
+                if ((wp.flags & SWP_HIDEWINDOW) != 0)
+                {
+                    wp.flags &= ~SWP_HIDEWINDOW; // Strip the hide flag
+                    Marshal.StructureToPtr(wp, lParam, false);
+                }
+                return 0;
+            }
+            case WM_SHOWWINDOW:
+            {
+                // If it's being hidden, ignore it
+                if (wParam == 0)
+                {
+                    return 0;
+                }
+                return DefWindowProcW(hWnd, msg, wParam, lParam);
             }
             case WM_MOUSEMOVE:
             {
