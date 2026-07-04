@@ -28,7 +28,7 @@ internal static class CompositionInterop
             apartmentType = 0 // DQTAT_COM_NONE
         };
 
-        CreateDispatcherQueueController(options, out _dispatcherQueueController);
+        Marshal.ThrowExceptionForHR(CreateDispatcherQueueController(options, out _dispatcherQueueController));
     }
 
     /// <summary>
