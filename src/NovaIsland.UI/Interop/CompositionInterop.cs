@@ -15,6 +15,22 @@ namespace NovaIsland.UI.Interop;
 /// </remarks>
 internal static class CompositionInterop
 {
+    private static nint _dispatcherQueueController;
+
+    internal static void EnsureDispatcherQueue()
+    {
+        if (_dispatcherQueueController != 0) return;
+
+        var options = new DispatcherQueueOptions
+        {
+            dwSize = Marshal.SizeOf<DispatcherQueueOptions>(),
+            threadType = 2, // DQTYPE_THREAD_CURRENT
+            apartmentType = 0 // DQTAT_COM_NONE
+        };
+
+        CreateDispatcherQueueController(options, out _dispatcherQueueController);
+    }
+
     /// <summary>
     /// Creates a <see cref="Compositor"/> and binds it to the specified HWND,
     /// producing a <see cref="DesktopWindowTarget"/> that roots the visual tree.
@@ -29,6 +45,8 @@ internal static class CompositionInterop
         out DesktopWindowTarget target,
         bool isTopmost = false)
     {
+        EnsureDispatcherQueue();
+
         compositor = new Compositor();
 
         // Get the ICompositorDesktopInterop interface from the Compositor.
@@ -36,6 +54,17 @@ internal static class CompositionInterop
 
         // Create the DesktopWindowTarget bound to our HWND.
         interop.CreateDesktopWindowTarget(hwnd, isTopmost, out target);
+    }
+
+    [DllImport("coremessaging.dll")]
+    private static extern int CreateDispatcherQueueController(DispatcherQueueOptions options, out nint dispatcherQueueController);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DispatcherQueueOptions
+    {
+        public int dwSize;
+        public int threadType;
+        public int apartmentType;
     }
 
     /// <summary>

@@ -28,6 +28,10 @@ public class ClipboardListenerService : IClipboardService, IDisposable
 
     public void StartListening()
     {
+        using (var context = _dbContextFactory.CreateDbContext())
+        {
+            context.Database.EnsureCreated();
+        }
         Windows.ApplicationModel.DataTransfer.Clipboard.ContentChanged += OnClipboardContentChanged;
     }
 
