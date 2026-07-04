@@ -166,7 +166,7 @@ public sealed class IslandShellService : IHostedService, IDisposable
 
             // Compute initial position (centered, DPI-scaled).
             _dpiHelper.ComputePositionCentered(
-                initialDesc.Width, initialDesc.Height, initialDesc.OffsetY,
+                0, initialDesc.Width, initialDesc.Height, initialDesc.OffsetY,
                 out int x, out int y, out int physWidth, out int physHeight);
 
             // Create the Win32 window.
@@ -239,11 +239,11 @@ public sealed class IslandShellService : IHostedService, IDisposable
 
         // Reposition with new DPI scaling.
         _animator.GetCurrentValues(out float w, out float h, out _, out _, out float offsetY);
-        if (_dpiHelper is not null)
+        if (_dpiHelper is not null && _window is not null)
         {
-            _dpiHelper.ComputePositionCentered(w, h, offsetY,
+            _dpiHelper.ComputePositionCentered(_window.Hwnd, w, h, offsetY,
                 out int x, out int y, out int pw, out int ph);
-            _window?.Reposition(x, y, pw, ph);
+            _window.Reposition(x, y, pw, ph);
         }
 
         _logger.LogInformation("DPI changed to {Dpi}. Island repositioned", newDpi);

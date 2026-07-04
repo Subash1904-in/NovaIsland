@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using static NovaIsland.UI.Interop.NativeMethods;
 
@@ -100,15 +101,40 @@ internal sealed class PerMonitorDpiHelper
     /// <param name="physicalHeight">Computed height in physical pixels.</param>
     /// <param name="logicalHeight">Island height in logical pixels.</param>
     internal void ComputePositionCentered(
-        float logicalWidth, float logicalHeight, float logicalOffsetY,
+        nint hwnd, float logicalWidth, float logicalHeight, float logicalOffsetY,
         out int x, out int y, out int physicalWidth, out int physicalHeight)
     {
-        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-
         physicalWidth = ScaleToPhysical(logicalWidth);
         physicalHeight = ScaleToPhysical(logicalHeight);
-        x = (screenWidth - physicalWidth) / 2;
-        y = ScaleToPhysical(logicalOffsetY);
+
+        nint hMonitor = 0;
+        if (hwnd != 0)
+        {
+            hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+        }
+
+        if (hMonitor == 0)
+        {
+            // Fallback if no window or monitor found
+            int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+            x = (screenWidth - physicalWidth) / 2;
+            y = 0;
+            return;
+        }
+
+        var mi = new MONITORINFO { cbSize = (uint)Marshal.SizeOf<MONITORINFO>() };
+        if (GetMonitorInfoW(hMonitor, ref mi))
+        {
+            int monitorWidth = mi.rcMonitor.Right - mi.rcMonitor.Left;
+            x = mi.rcMonitor.Left + (monitorWidth - physicalWidth) / 2;
+            y = mi.rcMonitor.Top; // Flush against top bezel, ignore logicalOffsetY
+        }
+        else
+        {
+            int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+            x = (screenWidth - physicalWidth) / 2;
+            y = 0;
+        }
     }
 
     /// <summary>

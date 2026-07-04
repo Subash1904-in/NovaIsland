@@ -178,12 +178,12 @@ internal sealed class IslandWindow : IDisposable
     /// </summary>
     private void ApplyDwmAttributes()
     {
-        // Rounded corners (Windows 11+).
-        int cornerPref = DWMWCP_ROUND;
+        // Disable DWM rounding to prevent drop shadows and margins
+        int cornerPref = DWMWCP_DONOTROUND;
         DwmSetWindowAttribute(_hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPref, sizeof(int));
 
-        // Mica backdrop (Windows 11 22H2+).
-        int backdropType = DWMSBT_MAINWINDOW;
+        // Disable Mica backdrop (opaque black background)
+        int backdropType = DWMSBT_NONE;
         DwmSetWindowAttribute(_hwnd, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
 
         // Extend frame into entire client area for DWM backdrop support.

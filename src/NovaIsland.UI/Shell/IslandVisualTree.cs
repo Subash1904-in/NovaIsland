@@ -73,15 +73,17 @@ internal sealed class IslandVisualTree : IDisposable
         target.Root = _rootVisual;
 
         // Create the island shape using a rounded rectangle geometry.
+        // Make height taller and offset up by the corner radius so top corners are square.
         _shapeGeometry = compositor.CreateRoundedRectangleGeometry();
-        _shapeGeometry.Size = new Vector2(initialWidth, initialHeight);
+        _shapeGeometry.Size = new Vector2(initialWidth, initialHeight + 20f);
         _shapeGeometry.CornerRadius = new Vector2(20f, 20f);
+        _shapeGeometry.Offset = new Vector2(0f, -20f);
 
         _shapeVisual = compositor.CreateShapeVisual();
         _shapeVisual.Size = new Vector2(initialWidth, initialHeight);
 
         _spriteShape = compositor.CreateSpriteShape(_shapeGeometry);
-        _spriteShape.FillBrush = compositor.CreateColorBrush(Windows.UI.Color.FromArgb(200, 32, 32, 32));
+        _spriteShape.FillBrush = compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 0, 0, 0));
 
         // Create the progress bar shape
         _progressBarGeometry = compositor.CreateRoundedRectangleGeometry();
@@ -95,6 +97,13 @@ internal sealed class IslandVisualTree : IDisposable
         _shapeVisual.Shapes.Add(_spriteShape);
         _shapeVisual.Shapes.Add(_progressBarShape);
         _rootVisual.Children.InsertAtTop(_shapeVisual);
+
+        // Canary debug visual: Red 20x20 square to prove tree attachment works
+        var debugVisual = compositor.CreateSpriteVisual();
+        debugVisual.Brush = compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 255, 0, 0));
+        debugVisual.Size = new Vector2(20f, 20f);
+        debugVisual.Offset = new Vector3(10f, 10f, 0f);
+        _rootVisual.Children.InsertAtTop(debugVisual);
 
         _logger.LogDebug("Composition visual tree initialized: {Width}x{Height}", initialWidth, initialHeight);
     }
@@ -115,7 +124,10 @@ internal sealed class IslandVisualTree : IDisposable
         var size = new Vector2(width, height);
         _rootVisual.Size = size;
         _shapeVisual.Size = size;
-        _shapeGeometry.Size = size;
+        
+        float cornerRadius = _shapeGeometry.CornerRadius.X;
+        _shapeGeometry.Size = new Vector2(width, height + cornerRadius);
+        _shapeGeometry.Offset = new Vector2(0f, -cornerRadius);
     }
 
     /// <summary>
@@ -126,6 +138,8 @@ internal sealed class IslandVisualTree : IDisposable
     {
         if (_shapeGeometry is null) return;
         _shapeGeometry.CornerRadius = new Vector2(radius, radius);
+        _shapeGeometry.Size = new Vector2(_shapeGeometry.Size.X, _shapeVisual!.Size.Y + radius);
+        _shapeGeometry.Offset = new Vector2(0f, -radius);
     }
 
     /// <summary>
@@ -170,8 +184,9 @@ internal sealed class IslandVisualTree : IDisposable
         _rootVisual.Opacity = opacity;
         _rootVisual.Offset = new Vector3(0f, offsetY, 0f);
         _shapeVisual.Size = size;
-        _shapeGeometry.Size = size;
         _shapeGeometry.CornerRadius = new Vector2(cornerRadius, cornerRadius);
+        _shapeGeometry.Size = new Vector2(width, height + cornerRadius);
+        _shapeGeometry.Offset = new Vector2(0f, -cornerRadius);
 
         // Keep progress bar at the bottom
         if (_progressBarShape != null)

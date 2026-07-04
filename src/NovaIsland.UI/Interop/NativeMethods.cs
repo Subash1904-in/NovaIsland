@@ -157,10 +157,14 @@ internal static partial class NativeMethods
     internal const uint DWMWA_SYSTEMBACKDROP_TYPE = 38;
 
     // DWM corner preference values
+    internal const int DWMWCP_DEFAULT = 0;
+    internal const int DWMWCP_DONOTROUND = 1;
     internal const int DWMWCP_ROUND = 2;
     internal const int DWMWCP_ROUNDSMALL = 3;
 
     // DWM system backdrop types
+    internal const int DWMSBT_AUTO = 0;
+    internal const int DWMSBT_NONE = 1;
     internal const int DWMSBT_MAINWINDOW = 2; // Mica
     internal const int DWMSBT_TRANSIENTWINDOW = 3; // Acrylic
     internal const int DWMSBT_TABBEDWINDOW = 4; // Tabbed Mica
@@ -168,6 +172,20 @@ internal static partial class NativeMethods
     // ─────────────────────────────────────────────────────────────────────
     // Structs
     // ─────────────────────────────────────────────────────────────────────
+
+    [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool GetMonitorInfoW(nint hMonitor, ref MONITORINFO lpmi);
+
+    /// <summary>Win32 MONITORINFO structure.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MONITORINFO
+    {
+        public uint cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+    }
 
     /// <summary>Win32 WNDCLASSEXW structure.</summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
