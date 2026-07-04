@@ -61,7 +61,7 @@ internal sealed class IslandVisualTree : IDisposable
     /// <param name="hwnd">The native window handle to bind to.</param>
     /// <param name="initialWidth">Initial width in logical pixels.</param>
     /// <param name="initialHeight">Initial height in logical pixels.</param>
-    internal void Initialize(nint hwnd, float initialWidth, float initialHeight, IslandHitTestRegistry hitTestRegistry, NovaIsland.Domain.Media.IMediaService mediaService, NovaIsland.Application.Modules.NotificationModule notificationModule)
+    internal void Initialize(nint hwnd, float initialWidth, float initialHeight, IslandHitTestRegistry hitTestRegistry, NovaIsland.Domain.Media.IMediaService mediaService, NovaIsland.Application.Modules.NotificationModule notificationModule, NovaIsland.Domain.Clipboard.IClipboardService clipboardService, IEnumerable<NovaIsland.Domain.Widgets.IWidget> widgets)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -112,7 +112,7 @@ internal sealed class IslandVisualTree : IDisposable
         _rootVisual.Children.InsertAtTop(_contentRenderer.MediaControlsVisual);
 
         // Add detail panel layer
-        _detailPanel = new IslandDetailPanel(compositor, hitTestRegistry, mediaService, notificationModule);
+        _detailPanel = new IslandDetailPanel(compositor, hitTestRegistry, mediaService, notificationModule, clipboardService, widgets);
         _rootVisual.Children.InsertAtTop(_detailPanel.RootVisual);
 
         _logger.LogDebug("Composition visual tree initialized: {Width}x{Height}", initialWidth, initialHeight);

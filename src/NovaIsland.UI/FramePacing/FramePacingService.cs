@@ -73,6 +73,13 @@ internal sealed class FramePacingService : IDisposable
         _window = window;
         _refreshDetector = refreshDetector;
         _mediaService = mediaService;
+        
+        _mediaService.ProgressChanged += OnMediaProgressChanged;
+    }
+
+    private void OnMediaProgressChanged(object? sender, double progress)
+    {
+        _visualTree.SetMediaProgress((float)progress);
     }
 
     /// <summary>
@@ -166,34 +173,18 @@ internal sealed class FramePacingService : IDisposable
         long frameEndTicks = _stopwatch.ElapsedTicks;
         _lastFrameTimeMs = (float)(frameEndTicks - currentTicks) / Stopwatch.Frequency * 1000f;
 
-        // Update media progress
-        var track = _mediaService.CurrentTrack;
-        bool isMediaPlaying = track != null && track.Status == NovaIsland.Domain.Media.PlaybackStatus.Playing;
-        if (track != null && isMediaPlaying && track.EndTime > TimeSpan.Zero)
-        {
-            var elapsed = DateTimeOffset.UtcNow - track.LastUpdatedTime;
-            var currentPosition = track.Position + elapsed;
-            if (currentPosition > track.EndTime) currentPosition = track.EndTime;
-            float progress = (float)(currentPosition.TotalSeconds / track.EndTime.TotalSeconds);
-            _visualTree.SetMediaProgress(progress);
-        }
-        else
-        {
-            _visualTree.SetMediaProgress(0f);
-        }
-
         // Pause when settled to save CPU.
-        // We only pause if media is NOT playing, because if media is playing we need to keep rendering the progress bar.
-        if (_animator.IsSettled && !isMediaPlaying)
+        if (_animator.IsSettled)
         {
             Stop();
-            _logger.LogDebug("Animation settled and media not playing. Frame timer paused for zero idle CPU");
+            _logger.LogDebug("Animation settled. Frame timer paused for zero idle CPU");
         }
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
+        _mediaService.ProgressChanged -= OnMediaProgressChanged;
         _frameTimer?.Dispose();
     }
 }

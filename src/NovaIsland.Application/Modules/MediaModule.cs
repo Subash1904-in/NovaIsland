@@ -21,12 +21,7 @@ public class MediaModule : INovaModule
     {
         _logger.LogInformation("Media Module started");
 
-        // Assuming SmtcMediaService has a way to initialize or we can just subscribe.
-        // The implementation created earlier has InitializeAsync. Let's cast and call it.
-        if (_mediaService.GetType().GetMethod("InitializeAsync") != null)
-        {
-            await (Task)_mediaService.GetType().GetMethod("InitializeAsync")!.Invoke(_mediaService, null)!;
-        }
+        await _mediaService.InitializeAsync();
 
         _mediaService.TrackChanged += OnTrackChanged;
 

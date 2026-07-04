@@ -23,5 +23,6 @@ public record TrackMetadata(
     PlaybackStatus Status,
     TimeSpan Position,
     TimeSpan EndTime,
-    DateTimeOffset LastUpdatedTime
+    DateTimeOffset LastUpdatedTime,
+    string? SourceAppUserModelId = null
 );

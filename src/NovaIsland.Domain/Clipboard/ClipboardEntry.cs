@@ -32,4 +32,9 @@ public class ClipboardEntry
     /// Indicates if the entry was matched against a sensitive regex pattern (e.g. password)
     /// </summary>
     public bool IsSensitive { get; set; }
+
+    /// <summary>
+    /// Path to the application that originated the clipboard content.
+    /// </summary>
+    public string? SourceAppPath { get; set; }
 }

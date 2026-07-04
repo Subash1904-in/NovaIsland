@@ -39,6 +39,8 @@ public sealed class IslandShellService : IHostedService, IDisposable
     private PerMonitorDpiHelper? _dpiHelper;
     private readonly NovaIsland.Domain.Media.IMediaService _mediaService;
     private readonly NovaIsland.Application.Modules.NotificationModule _notificationModule;
+    private readonly NovaIsland.Domain.Clipboard.IClipboardService _clipboardService;
+    private readonly IEnumerable<NovaIsland.Domain.Widgets.IWidget> _widgets;
     private IslandHitTestRegistry? _hitTestRegistry;
 
     private volatile bool _isStarted;
@@ -57,7 +59,9 @@ public sealed class IslandShellService : IHostedService, IDisposable
         IOptions<IslandSettings> settings,
         IIslandAnimator animator,
         NovaIsland.Domain.Media.IMediaService mediaService,
-        NovaIsland.Application.Modules.NotificationModule notificationModule)
+        NovaIsland.Application.Modules.NotificationModule notificationModule,
+        NovaIsland.Domain.Clipboard.IClipboardService clipboardService,
+        IEnumerable<NovaIsland.Domain.Widgets.IWidget> widgets)
     {
         _logger = logger;
         _loggerFactory = loggerFactory;
@@ -65,6 +69,8 @@ public sealed class IslandShellService : IHostedService, IDisposable
         _animator = animator;
         _mediaService = mediaService;
         _notificationModule = notificationModule;
+        _clipboardService = clipboardService;
+        _widgets = widgets;
     }
 
     /// <summary>
@@ -208,7 +214,7 @@ public sealed class IslandShellService : IHostedService, IDisposable
 
             // Initialize composition visual tree.
             _visualTree = new IslandVisualTree(_loggerFactory.CreateLogger<IslandVisualTree>());
-            _visualTree.Initialize(_window.Hwnd, initialDesc.Width, initialDesc.Height, _hitTestRegistry, _mediaService, _notificationModule);
+            _visualTree.Initialize(_window.Hwnd, initialDesc.Width, initialDesc.Height, _hitTestRegistry, _mediaService, _notificationModule, _clipboardService, _widgets);
 
             // Set interaction callbacks on window
             _window.SetInteractionCallbacks(OnHoverEnter, OnHoverExit, OnClick);
@@ -310,11 +316,21 @@ public sealed class IslandShellService : IHostedService, IDisposable
         else if (_animator.CurrentInteractionTarget == IslandInteractionState.FullExpanded)
         {
             // Next click should go to app
-            nint hwnd = FindWindowW(null, "Spotify Premium");
-            if (hwnd == 0) hwnd = FindWindowW(null, "Media Player");
-            if (hwnd != 0)
+            string? aumid = _mediaService.CurrentTrack?.SourceAppUserModelId;
+            if (!string.IsNullOrEmpty(aumid))
             {
-                SetForegroundWindow(hwnd);
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = @"shell:AppsFolder\" + aumid,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to launch app with AUMID: {Aumid}", aumid);
+                }
             }
             
             TransitionInteractionTo(IslandInteractionState.Idle);

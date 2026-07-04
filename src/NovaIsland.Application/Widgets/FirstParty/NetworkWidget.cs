@@ -15,6 +15,8 @@ public class NetworkWidget : IWidget
         return Task.CompletedTask;
     }
 
+    public string GetSummaryText() => "Network: Connected";
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

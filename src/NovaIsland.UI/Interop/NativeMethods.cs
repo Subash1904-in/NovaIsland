@@ -113,6 +113,32 @@ internal static partial class NativeMethods
     internal static partial int DwmExtendFrameIntoClientArea(nint hwnd, ref MARGINS pMarInset);
 
     // ─────────────────────────────────────────────────────────────────────
+    // Shell32 & Process Management
+    // ─────────────────────────────────────────────────────────────────────
+
+    [DllImport("shell32.dll", EntryPoint = "SHGetFileInfoW", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    internal static extern nint SHGetFileInfoW(
+        string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+    [LibraryImport("user32.dll", EntryPoint = "EnumWindows")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool EnumWindows(EnumWindowsProc lpEnumFunc, nint lParam);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowThreadProcessId")]
+    internal static partial uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
+
+    [LibraryImport("user32.dll", EntryPoint = "IsWindowVisible")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool IsWindowVisible(nint hWnd);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowTextLengthW")]
+    internal static partial int GetWindowTextLengthW(nint hWnd);
+
+    [LibraryImport("user32.dll", EntryPoint = "DestroyIcon")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool DestroyIcon(nint hIcon);
+
+    // ─────────────────────────────────────────────────────────────────────
     // Constants
     // ─────────────────────────────────────────────────────────────────────
 
@@ -192,6 +218,12 @@ internal static partial class NativeMethods
     internal const int DWMSBT_MAINWINDOW = 2; // Mica
     internal const int DWMSBT_TRANSIENTWINDOW = 3; // Acrylic
     internal const int DWMSBT_TABBEDWINDOW = 4; // Tabbed Mica
+
+    // Shell32 flags
+    internal const uint SHGFI_ICON = 0x000000100;
+    internal const uint SHGFI_SMALLICON = 0x000000001;
+    internal const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
+    internal const uint FILE_ATTRIBUTE_NORMAL = 0x00000080;
 
     // ─────────────────────────────────────────────────────────────────────
     // Structs
@@ -298,6 +330,23 @@ internal static partial class NativeMethods
         public uint flags;
     }
 
+    /// <summary>Shell32 SHFILEINFO structure.</summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct SHFILEINFO
+    {
+        public nint hIcon;
+        public int iIcon;
+        public uint dwAttributes;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szDisplayName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+        public string szTypeName;
+    }
+
     /// <summary>Delegate type for Win32 window procedures.</summary>
     internal delegate nint WndProcDelegate(nint hWnd, uint msg, nint wParam, nint lParam);
+
+    /// <summary>Delegate type for EnumWindows.</summary>
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    internal delegate bool EnumWindowsProc(nint hWnd, nint lParam);
 }

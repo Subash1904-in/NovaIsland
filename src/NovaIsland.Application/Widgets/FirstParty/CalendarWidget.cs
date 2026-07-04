@@ -16,6 +16,8 @@ public class CalendarWidget : IWidget
         return Task.CompletedTask;
     }
 
+    public string GetSummaryText() => "No upcoming meetings";
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

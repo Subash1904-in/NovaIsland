@@ -29,10 +29,7 @@ public class ClipboardModule : INovaModule
         _logger.LogInformation("Clipboard Module started");
 
         // Start listening to the clipboard
-        if (_clipboardService.GetType().GetMethod("StartListening") != null)
-        {
-            _clipboardService.GetType().GetMethod("StartListening")!.Invoke(_clipboardService, null);
-        }
+        _clipboardService.StartListening();
 
         _clipboardService.EntryAdded += OnEntryAdded;
 

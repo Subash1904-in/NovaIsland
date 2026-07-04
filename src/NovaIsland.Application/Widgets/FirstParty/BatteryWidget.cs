@@ -15,6 +15,8 @@ public class BatteryWidget : IWidget
         return Task.CompletedTask;
     }
 
+    public string GetSummaryText() => "Battery: 85%";
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

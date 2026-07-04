@@ -8,9 +8,12 @@ public interface IMediaService
 {
     TrackMetadata? CurrentTrack { get; }
     
+    Task InitializeAsync();
+    
     Task PlayPauseAsync();
     Task PreviousAsync();
     Task NextAsync();
     
     event EventHandler<TrackMetadata>? TrackChanged;
+    event EventHandler<double>? ProgressChanged;
 }

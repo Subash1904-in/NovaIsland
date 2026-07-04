@@ -10,15 +10,18 @@ public class SmtcMediaService : IMediaService, IDisposable
     private GlobalSystemMediaTransportControlsSessionManager? _sessionManager;
     private GlobalSystemMediaTransportControlsSession? _currentSession;
     private readonly ILogger<SmtcMediaService> _logger;
+    private System.Threading.Timer? _progressTimer;
     private bool _isDisposed;
 
     public TrackMetadata? CurrentTrack { get; private set; }
 
     public event EventHandler<TrackMetadata>? TrackChanged;
+    public event EventHandler<double>? ProgressChanged;
 
     public SmtcMediaService(ILogger<SmtcMediaService> logger)
     {
         _logger = logger;
+        _progressTimer = new System.Threading.Timer(OnProgressTimerTick, null, Timeout.Infinite, Timeout.Infinite);
     }
 
     public async Task InitializeAsync()
@@ -110,15 +113,38 @@ public class SmtcMediaService : IMediaService, IDisposable
                 Status: status,
                 Position: timeline?.Position ?? TimeSpan.Zero,
                 EndTime: timeline?.EndTime ?? TimeSpan.Zero,
-                LastUpdatedTime: DateTimeOffset.UtcNow
+                LastUpdatedTime: DateTimeOffset.UtcNow,
+                SourceAppUserModelId: _currentSession.SourceAppUserModelId
             );
 
             CurrentTrack = newTrack;
             TrackChanged?.Invoke(this, newTrack);
+            
+            if (status == PlaybackStatus.Playing)
+            {
+                _progressTimer?.Change(0, 500);
+            }
+            else
+            {
+                _progressTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error refreshing SMTC track info");
+        }
+    }
+
+    private void OnProgressTimerTick(object? state)
+    {
+        var track = CurrentTrack;
+        if (track != null && track.Status == PlaybackStatus.Playing && track.EndTime > TimeSpan.Zero)
+        {
+            var elapsed = DateTimeOffset.UtcNow - track.LastUpdatedTime;
+            var currentPosition = track.Position + elapsed;
+            if (currentPosition > track.EndTime) currentPosition = track.EndTime;
+            double progress = currentPosition.TotalSeconds / track.EndTime.TotalSeconds;
+            ProgressChanged?.Invoke(this, progress);
         }
     }
 
@@ -163,6 +189,7 @@ public class SmtcMediaService : IMediaService, IDisposable
             _sessionManager.CurrentSessionChanged -= OnCurrentSessionChanged;
         }
 
+        _progressTimer?.Dispose();
         _isDisposed = true;
     }
 }

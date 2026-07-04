@@ -16,6 +16,8 @@ public class WeatherWidget : IWidget
         return Task.CompletedTask;
     }
 
+    public string GetSummaryText() => "24°C, Sunny";
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);

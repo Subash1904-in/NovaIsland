@@ -5,5 +5,6 @@ public record NotificationMessage(
     string AppName,
     string Title,
     string Body,
-    DateTimeOffset Timestamp
+    DateTimeOffset Timestamp,
+    string? SourceAppPath = null
 );
