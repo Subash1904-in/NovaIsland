@@ -6,7 +6,8 @@ using System.Runtime.InteropServices.Marshalling;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Windows.UI.Composition;
-using Vortice.D3D11;
+using Vortice.Direct3D11;
+using Vortice.Direct3D;
 using Vortice.Direct2D1;
 using Vortice.DirectWrite;
 using Vortice.DXGI;
@@ -14,15 +15,18 @@ using Vortice.WIC;
 using Vortice.Mathematics;
 using WinRT;
 
+#pragma warning disable SYSLIB1051
+#pragma warning disable CA1859
+
 namespace NovaIsland.UI.Shell;
 
 [GeneratedComInterface]
 [Guid("25297D5C-3AD4-4C9C-B5CF-E36A38512330")]
 internal partial interface ICompositorInterop
 {
-    void CreateCompositionSurfaceForHandle(nint swapChain, out ICompositionSurface result);
-    void CreateCompositionSurfaceForSwapChain(nint swapChain, out ICompositionSurface result);
-    void CreateGraphicsDevice(nint renderingDevice, out CompositionGraphicsDevice result);
+    void CreateCompositionSurfaceForHandle(nint swapChain, out nint result);
+    void CreateCompositionSurfaceForSwapChain(nint swapChain, out nint result);
+    void CreateGraphicsDevice(nint renderingDevice, out nint result);
 }
 
 [GeneratedComInterface]
@@ -74,15 +78,16 @@ internal sealed class IslandContentRenderer : IDisposable
         // 1. Initialize Direct3D / DXGI
         var hr = D3D11.D3D11CreateDevice(
             null, DriverType.Hardware, DeviceCreationFlags.BgraSupport, 
-            null, out _d3dDevice);
+            null, out ID3D11Device? d3dDevice);
             
-        if (hr.Failure)
+        if (hr.Failure || d3dDevice == null)
         {
             D3D11.D3D11CreateDevice(
                 null, DriverType.Warp, DeviceCreationFlags.BgraSupport, 
-                null, out _d3dDevice).CheckError();
+                null, out d3dDevice).CheckError();
         }
 
+        _d3dDevice = d3dDevice!;
         _dxgiDevice = _d3dDevice.QueryInterface<IDXGIDevice>();
 
         // 2. Initialize Direct2D / DirectWrite / WIC
@@ -94,7 +99,8 @@ internal sealed class IslandContentRenderer : IDisposable
 
         // 3. Create Composition Graphics Device
         var compositorInterop = compositor.As<ICompositorInterop>();
-        compositorInterop.CreateGraphicsDevice(_dxgiDevice.NativePointer, out _graphicsDevice);
+        compositorInterop.CreateGraphicsDevice(_dxgiDevice.NativePointer, out nint graphicsDevicePtr);
+        _graphicsDevice = MarshalInterface<CompositionGraphicsDevice>.FromAbi(graphicsDevicePtr);
 
         // 4. Setup Visuals
         _iconVisual = _compositor.CreateSpriteVisual();
@@ -140,17 +146,13 @@ internal sealed class IslandContentRenderer : IDisposable
                 else
                 {
                     string capturedHash = hash;
-                    // Asynchronous decode to avoid blocking hot path
                     Task.Run(() => 
                     {
                         try 
                         {
                             var bitmap = DecodeImage(iconBytes);
                             _bitmapCache[capturedHash] = bitmap;
-                            // Need to dispatch to UI thread or since D2D context is single threaded,
-                            // we lock or just draw. We can invoke a method to draw on the correct thread.
-                            // For this simplified example, we'll draw it directly if thread safety allows,
-                            // or ideally enqueue to a dispatcher. We'll draw it.
+                            
                             lock (_d2dContext)
                             {
                                 if (_currentIconHash == capturedHash && !_disposed)
@@ -204,18 +206,17 @@ internal sealed class IslandContentRenderer : IDisposable
             using var solidBrushWhite = _d2dContext.CreateSolidColorBrush(new Color4(1f, 1f, 1f, 1f));
             using var solidBrushGray = _d2dContext.CreateSolidColorBrush(new Color4(0.8f, 0.8f, 0.8f, 1f));
             
-            using var titleFormat = _dwriteFactory.CreateTextFormat("Segoe UI", 14f);
-            titleFormat.FontWeight = FontWeight.SemiBold;
+            using var titleFormat = _dwriteFactory.CreateTextFormat("Segoe UI", FontWeight.SemiBold, FontStyle.Normal, FontStretch.Normal, 14f);
             titleFormat.WordWrapping = WordWrapping.NoWrap;
 
-            using var subtitleFormat = _dwriteFactory.CreateTextFormat("Segoe UI", 12f);
+            using var subtitleFormat = _dwriteFactory.CreateTextFormat("Segoe UI", FontWeight.Normal, FontStyle.Normal, FontStretch.Normal, 12f);
             subtitleFormat.WordWrapping = WordWrapping.NoWrap;
 
-            _d2dContext.DrawText(title, titleFormat, new System.Drawing.RectangleF(0, 0, 300, 20), solidBrushWhite);
+            _d2dContext.DrawText(title, titleFormat, new Rect(0, 0, 300, 20), solidBrushWhite);
             
             if (!string.IsNullOrEmpty(subtitle))
             {
-                _d2dContext.DrawText(subtitle, subtitleFormat, new System.Drawing.RectangleF(0, 20, 300, 20), solidBrushGray);
+                _d2dContext.DrawText(subtitle, subtitleFormat, new Rect(0, 20, 300, 20), solidBrushGray);
             }
 
             _d2dContext.EndDraw();
@@ -251,7 +252,7 @@ internal sealed class IslandContentRenderer : IDisposable
             _d2dContext.Target = targetBitmap;
             _d2dContext.BeginDraw();
             _d2dContext.Clear(new Color4(0, 0, 0, 0));
-            _d2dContext.DrawBitmap(bitmap, new System.Drawing.RectangleF(0, 0, 24, 24), 1.0f, BitmapInterpolationMode.Linear);
+            ((ID2D1RenderTarget)_d2dContext).DrawBitmap(bitmap, 1.0f, Vortice.Direct2D1.BitmapInterpolationMode.Linear, new Rect(0, 0, 24, 24));
             _d2dContext.EndDraw();
             _d2dContext.Target = null;
             
