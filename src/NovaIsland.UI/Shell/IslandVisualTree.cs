@@ -35,6 +35,7 @@ internal sealed class IslandVisualTree : IDisposable
     
     private CompositionRoundedRectangleGeometry? _progressBarGeometry;
     private CompositionSpriteShape? _progressBarShape;
+    private IslandContentRenderer? _contentRenderer;
     private bool _disposed;
 
     /// <summary>
@@ -96,16 +97,26 @@ internal sealed class IslandVisualTree : IDisposable
 
         _shapeVisual.Shapes.Add(_spriteShape);
         _shapeVisual.Shapes.Add(_progressBarShape);
+
+        // Bug 3 fix: Explicit inset clip to bound to precise Size regardless of offset trick
+        _shapeVisual.Clip = compositor.CreateInsetClip();
+
         _rootVisual.Children.InsertAtTop(_shapeVisual);
 
-        // Canary debug visual: Red 20x20 square to prove tree attachment works
-        var debugVisual = compositor.CreateSpriteVisual();
-        debugVisual.Brush = compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 255, 0, 0));
-        debugVisual.Size = new Vector2(20f, 20f);
-        debugVisual.Offset = new Vector3(10f, 10f, 0f);
-        _rootVisual.Children.InsertAtTop(debugVisual);
+        // Add content layer
+        _contentRenderer = new IslandContentRenderer(compositor);
+        _rootVisual.Children.InsertAtTop(_contentRenderer.IconVisual);
+        _rootVisual.Children.InsertAtTop(_contentRenderer.TextVisual);
 
         _logger.LogDebug("Composition visual tree initialized: {Width}x{Height}", initialWidth, initialHeight);
+    }
+
+    /// <summary>
+    /// Updates the text and icon content displayed on the island.
+    /// </summary>
+    public void UpdateContent(string title, string subtitle, byte[]? iconBytes)
+    {
+        _contentRenderer?.UpdateContent(title, subtitle, iconBytes);
     }
 
     /// <summary>
@@ -199,7 +210,7 @@ internal sealed class IslandVisualTree : IDisposable
     /// Updates the media progress bar width based on the normalized progress (0.0 to 1.0).
     /// </summary>
     /// <param name="progress">Normalized progress (0.0 to 1.0).</param>
-    internal void SetMediaProgress(float progress)
+    public void SetMediaProgress(float progress)
     {
         if (_progressBarGeometry == null || _shapeVisual == null) return;
         
@@ -216,6 +227,8 @@ internal sealed class IslandVisualTree : IDisposable
         if (_disposed) return;
         _disposed = true;
 
+        _contentRenderer?.Dispose();
+        _contentRenderer = null;
         _spriteShape = null;
         _shapeVisual = null;
         _shapeGeometry = null;

@@ -104,6 +104,7 @@ public sealed class IslandShellService : IHostedService, IDisposable
         _shellThread.Start();
 
         _notificationModule.OnAlertTriggered += HandleNotificationAlert;
+        _mediaService.TrackChanged += HandleTrackChanged;
 
         // Wait for window creation to complete before reporting started.
         _windowCreated.Wait(TimeSpan.FromSeconds(10), cancellationToken);
@@ -122,6 +123,7 @@ public sealed class IslandShellService : IHostedService, IDisposable
         _framePacing?.Stop();
 
         _notificationModule.OnAlertTriggered -= HandleNotificationAlert;
+        _mediaService.TrackChanged -= HandleTrackChanged;
 
         // Post WM_QUIT to terminate the message loop.
         _window?.PostQuit();
@@ -138,11 +140,18 @@ public sealed class IslandShellService : IHostedService, IDisposable
 
     private void HandleNotificationAlert(object? sender, NovaIsland.Domain.Notifications.NotificationMessage msg)
     {
+        _visualTree?.UpdateContent(msg.Title, msg.Body, null);
+
         // Trigger alert state
         TransitionTo(IslandState.Alert);
 
         // Then transition back to compact after 3 seconds
         Task.Delay(3000).ContinueWith(_ => TransitionTo(IslandState.Compact));
+    }
+
+    private void HandleTrackChanged(object? sender, NovaIsland.Domain.Media.TrackMetadata track)
+    {
+        _visualTree?.UpdateContent(track.Title, track.Artist, null);
     }
 
     /// <summary>

@@ -63,10 +63,10 @@ public static class IslandStateDescriptors
     // Pre-allocated array indexed by IslandState ordinal. Never modified after init.
     private static readonly IslandStateDescriptor[] Descriptors =
     [
-        new(220f, 40f, 20f, 1.0f, 8f),   // Compact
-        new(400f, 320f, 16f, 1.0f, 8f),   // Expanded
-        new(120f, 8f, 4f, 0.7f, 2f),      // Minimal
-        new(300f, 60f, 14f, 1.0f, 8f),    // Alert
+        new(220f, 40f, 20f, 1.0f, 0f),    // Compact
+        new(400f, 320f, 16f, 1.0f, 0f),   // Expanded
+        new(120f, 8f, 4f, 0.7f, 0f),      // Minimal
+        new(300f, 60f, 14f, 1.0f, 0f),    // Alert
     ];
 
     /// <summary>
