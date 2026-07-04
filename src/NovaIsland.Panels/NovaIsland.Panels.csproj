@@ -15,6 +15,7 @@
     <AppxPackage>false</AppxPackage>
     <DisableWinUI8xMsixTooling>true</DisableWinUI8xMsixTooling>
     <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+    <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
   </PropertyGroup>
 
   <ItemGroup>
