@@ -34,6 +34,10 @@ public class WindowsNotificationListenerService : INotificationService
             _listener.NotificationChanged += OnNotificationChanged;
             _logger.LogInformation("WindowsNotificationListenerService initialized successfully.");
         }
+        catch (System.Runtime.InteropServices.COMException ex) when ((uint)ex.HResult == 0x80070490)
+        {
+            _logger.LogWarning("Windows notification listener is not supported in the current environment or the element was not found (0x80070490). Notifications will not be captured.");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize WindowsNotificationListenerService.");

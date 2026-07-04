@@ -102,18 +102,16 @@ public class ClipboardListenerService : IClipboardService, IDisposable
     {
         using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await context.Entries
-            .OrderByDescending(e => e.Timestamp)
-            .Take(limit)
+            .FromSqlRaw("SELECT * FROM Entries ORDER BY Timestamp DESC LIMIT {0}", limit)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<ClipboardEntry>> SearchAsync(string query, int limit = 50, CancellationToken cancellationToken = default)
     {
         using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var wildcard = $"%{query}%";
         return await context.Entries
-            .Where(e => e.Content != null && e.Content.Contains(query))
-            .OrderByDescending(e => e.Timestamp)
-            .Take(limit)
+            .FromSqlRaw("SELECT * FROM Entries WHERE Content LIKE {0} ORDER BY Timestamp DESC LIMIT {1}", wildcard, limit)
             .ToListAsync(cancellationToken);
     }
 

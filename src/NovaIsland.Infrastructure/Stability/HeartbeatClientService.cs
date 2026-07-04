@@ -45,6 +45,11 @@ public sealed class HeartbeatClientService : BackgroundService
             {
                 break;
             }
+            catch (TimeoutException)
+            {
+                _logger.LogDebug("Watchdog pipe not available, retrying in 1s...");
+                await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
+            }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Heartbeat pipe connection lost, reconnecting in 1s...");

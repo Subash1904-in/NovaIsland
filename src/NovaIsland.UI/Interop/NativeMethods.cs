@@ -70,7 +70,7 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetWindowRect(nint hWnd, out RECT lpRect);
 
-    [LibraryImport("user32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
     internal static partial nint GetModuleHandleW(string? lpModuleName);
 
     [LibraryImport("user32.dll", EntryPoint = "MonitorFromWindow")]
@@ -97,13 +97,6 @@ internal static partial class NativeMethods
 
     [LibraryImport("dwmapi.dll", EntryPoint = "DwmExtendFrameIntoClientArea")]
     internal static partial int DwmExtendFrameIntoClientArea(nint hwnd, ref MARGINS pMarInset);
-
-    // ─────────────────────────────────────────────────────────────────────
-    // Kernel32
-    // ─────────────────────────────────────────────────────────────────────
-
-    [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
-    internal static partial nint Kernel32GetModuleHandle(string? lpModuleName);
 
     // ─────────────────────────────────────────────────────────────────────
     // Constants
