@@ -15,6 +15,7 @@
     <VCInstallPath32>dummy_path</VCInstallPath32>
     <VCInstallPath64>dummy_path</VCInstallPath64>
     <AppxGeneratePriEnabled Condition="'$(BuildingInsideVisualStudio)' != 'true'">false</AppxGeneratePriEnabled>
+    <EnableCoreMrtTooling Condition="'$(BuildingInsideVisualStudio)' != 'true'">false</EnableCoreMrtTooling>
   </PropertyGroup>
 
   <!-- Deterministic builds for CI reproducibility -->

@@ -19,6 +19,7 @@
     <EnableMsixTooling Condition="'$(BuildMsix)' == 'true'">true</EnableMsixTooling>
     <AppxPackageSigningEnabled Condition="'$(BuildMsix)' == 'true'">true</AppxPackageSigningEnabled>
     <GenerateAppxPackageOnBuild>false</GenerateAppxPackageOnBuild>
+    <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
   </PropertyGroup>
 
   <ItemGroup>
