@@ -29,6 +29,9 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool ShowWindow(nint hWnd, int nCmdShow);
 
+    [LibraryImport("user32.dll", EntryPoint = "LoadCursorW", StringMarshalling = StringMarshalling.Utf16)]
+    internal static partial nint LoadCursorW(nint hInstance, nint lpCursorName);
+
     [LibraryImport("user32.dll", EntryPoint = "UpdateWindow")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool UpdateWindow(nint hWnd);

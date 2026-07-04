@@ -90,7 +90,7 @@ internal sealed class IslandWindow : IDisposable
                 cbWndExtra = 0,
                 hInstance = hInstance,
                 hIcon = 0,
-                hCursor = 0,
+                hCursor = LoadCursorW(0, 32512), // 32512 = IDC_ARROW
                 hbrBackground = 0,
                 lpszMenuName = 0,
                 lpszClassName = classNamePtr,
@@ -104,7 +104,9 @@ internal sealed class IslandWindow : IDisposable
                 return;
             }
 
-            uint exStyle = WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST;
+            // Remove WS_EX_LAYERED. DWM Mica backdrop and DesktopWindowTarget composition
+            // do not function correctly if WS_EX_LAYERED is applied without layered attributes.
+            uint exStyle = WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST;
             uint style = WS_POPUP | WS_VISIBLE;
 
             _hwnd = CreateWindowExW(
